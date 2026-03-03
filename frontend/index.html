@@ -321,107 +321,107 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <label for="pvalue-slider" class="text-sm font-medium text-slate-600">p-Value
-                            Threshold:</label>
-                        <div class="flex flex-col">
-                            <input type="range" id="pvalue-slider" min="0" max="3" step="1" value="1"
-                                oninput="updatePValueUI(this.value)" onchange="updateOutlierThreshold()"
-                                class="w-32 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                            <div class="flex justify-between w-32 mt-1 text-[10px] text-slate-400 px-1">
-                                <span>0.1</span>
-                                <span>.05</span>
-                                <span>.01</span>
-                                <span>.005</span>
+                        <div class="flex items-center space-x-3 mb-4">
+                            <label for="pvalue-slider" class="text-sm font-medium text-slate-600">p-Value
+                                Threshold:</label>
+                            <div class="flex flex-col">
+                                <input type="range" id="pvalue-slider" min="0" max="3" step="1" value="1"
+                                    oninput="updatePValueUI(this.value)" onchange="updateOutlierThreshold()"
+                                    class="w-32 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                <div class="flex justify-between w-32 mt-1 text-[10px] text-slate-400 px-1">
+                                    <span>0.1</span>
+                                    <span>.05</span>
+                                    <span>.01</span>
+                                    <span>.005</span>
+                                </div>
                             </div>
+                            <span id="pvalue-display" class="font-bold text-indigo-600 w-10 text-right">0.05</span>
+                            <input type="hidden" id="pvalue-threshold" value="0.05">
                         </div>
-                        <span id="pvalue-display" class="font-bold text-indigo-600 w-10 text-right">0.05</span>
-                        <input type="hidden" id="pvalue-threshold" value="0.05">
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-slate-700">
+                                <thead class="text-xs text-slate-600 bg-slate-50/50">
+                                    <tr>
+                                        <th class="px-4 py-3">Residue No.</th>
+                                        <th class="px-4 py-3 text-center">PC1</th>
+                                        <th class="px-4 py-3 text-center">PC2</th>
+                                        <th class="px-4 py-3 text-center">PC3</th>
+                                        <th class="px-4 py-3 text-center">Mahalanobis</th>
+                                        <th class="px-4 py-3 text-center">p-Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="outlier-table-body">
+                                    <!-- Rows added dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-slate-700">
-                        <thead class="text-xs text-slate-600 bg-slate-50/50">
-                            <tr>
-                                <th class="px-4 py-3">Residue No.</th>
-                                <th class="px-4 py-3 text-center">PC1</th>
-                                <th class="px-4 py-3 text-center">PC2</th>
-                                <th class="px-4 py-3 text-center">PC3</th>
-                                <th class="px-4 py-3 text-center">Mahalanobis</th>
-                                <th class="px-4 py-3 text-center">p-Value</th>
-                            </tr>
-                        </thead>
-                        <tbody id="outlier-table-body">
-                            <!-- Rows added dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- PDB Structure Viewer (Conditional) -->
-            <div id="pdb-section" class="glass p-6 rounded-2xl hidden mt-6">
-                <h2 class="text-xl font-semibold mb-4 text-slate-700">Protein Structure (Outlier Mapping)</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <!-- PDB Upload Control -->
-                    <div class="lg:col-span-1 space-y-4">
-                        <label for="pdb-file-input"
-                            class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all"
-                            ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
-                            ondragleave="this.classList.remove('border-indigo-500');" ondrop="handlePDBDrop(event)">
-                            <div
-                                class="flex flex-col items-center justify-center pt-5 pb-6 text-center pointer-events-none">
-                                <span class="text-3xl mb-2">🧬</span>
-                                <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">Upload
-                                        PDB</span></p>
-                                <p class="text-xs text-slate-400">Drag & Drop or Click</p>
+                <!-- PDB Structure Viewer (Conditional) -->
+                <div id="pdb-section" class="glass p-6 rounded-2xl hidden mt-6">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-700">Protein Structure (Outlier Mapping)</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <!-- PDB Upload Control -->
+                        <div class="lg:col-span-1 space-y-4">
+                            <label for="pdb-file-input"
+                                class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all"
+                                ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
+                                ondragleave="this.classList.remove('border-indigo-500');" ondrop="handlePDBDrop(event)">
+                                <div
+                                    class="flex flex-col items-center justify-center pt-5 pb-6 text-center pointer-events-none">
+                                    <span class="text-3xl mb-2">🧬</span>
+                                    <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">Upload
+                                            PDB</span></p>
+                                    <p class="text-xs text-slate-400">Drag & Drop or Click</p>
+                                </div>
+                                <input id="pdb-file-input" type="file" class="hidden" accept=".pdb,.cif,.ent"
+                                    onchange="handlePDBUpload(event)" />
+                            </label>
+                            <div id="pdb-file-name" class="text-xs text-center text-indigo-600 font-medium h-4">
                             </div>
-                            <input id="pdb-file-input" type="file" class="hidden" accept=".pdb,.cif,.ent"
-                                onchange="handlePDBUpload(event)" />
-                        </label>
-                        <div id="pdb-file-name" class="text-xs text-center text-indigo-600 font-medium h-4">
-                        </div>
-                        <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
-                            <p class="font-semibold mb-1">Color Legend:</p>
-                            <div class="flex items-center mb-1"><span
-                                    class="w-3 h-3 bg-rose-500 rounded-full mr-2"></span> Outliers (Red)</div>
-                            <div class="flex items-center"><span class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span>
-                                Others (Gray)</div>
-                        </div>
+                            <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
+                                <p class="font-semibold mb-1">Color Legend:</p>
+                                <div class="flex items-center mb-1"><span
+                                        class="w-3 h-3 bg-rose-500 rounded-full mr-2"></span> Outliers (Red)</div>
+                                <div class="flex items-center"><span
+                                        class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span>
+                                    Others (Gray)</div>
+                            </div>
 
-                    </div>
-                    <!-- Viewer Container -->
-                    <div class="lg:col-span-3 flex flex-col space-y-2">
-                        <!-- Toolbar -->
-                        <div class="flex justify-end space-x-2">
-                            <button onclick="handleToolbar('reset')"
-                                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Reset
-                                View</button>
-                            <button onclick="handleToolbar('spin')"
-                                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Spin</button>
-                            <button onclick="handleToolbar('screenshot')"
-                                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">📸</button>
                         </div>
-                        <div class="h-[400px] bg-white rounded-xl border border-slate-200 relative overflow-hidden"
-                            id="ngl-viewport">
-                            <!-- NGL Stage will be injected here -->
-                            <div id="pdb-placeholder"
-                                class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-10 bg-white">
-                                <span class="text-4xl mb-4"></span>
-                                <p class="text-lg font-semibold">Load PDB to view structure</p>
-                                <p class="text-xs text-slate-500 mt-2">NGL Viewer Ready</p>
+                        <!-- Viewer Container -->
+                        <div class="lg:col-span-3 flex flex-col space-y-2">
+                            <!-- Toolbar -->
+                            <div class="flex justify-end space-x-2">
+                                <button onclick="handleToolbar('reset')"
+                                    class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Reset
+                                    View</button>
+                                <button onclick="handleToolbar('spin')"
+                                    class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Spin</button>
+                                <button onclick="handleToolbar('screenshot')"
+                                    class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">📸</button>
+                            </div>
+                            <div class="h-[400px] bg-white rounded-xl border border-slate-200 relative overflow-hidden"
+                                id="ngl-viewport">
+                                <!-- NGL Stage will be injected here -->
+                                <div id="pdb-placeholder"
+                                    class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-10 bg-white">
+                                    <span class="text-4xl mb-4"></span>
+                                    <p class="text-lg font-semibold">Load PDB to view structure</p>
+                                    <p class="text-xs text-slate-500 mt-2">NGL Viewer Ready</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Titration/Residue Plots Grid (Restored) -->
-            <div id="kd-plots" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Titration/Residue Plots Grid (Restored) -->
+                <div id="kd-plots" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                </div>
             </div>
         </div>
-    </div>
     </div>
     </div>
 
