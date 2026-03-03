@@ -50,7 +50,8 @@ async def read_index():
 
 @app.post("/analyze_picked")
 async def analyze_picked(
-    intensities: List[str] = Form(...)
+    intensities: List[str] = Form(...),
+    calculate_csp: bool = Form(False)
 ):
     try:
         residue_data = []
@@ -67,7 +68,7 @@ async def analyze_picked(
              raise HTTPException(status_code=400, detail="No data provided")
              
         first_line = valid_lines[0]
-        parts = re.split(r'[,\s]+', first_line)
+        parts = [p for p in re.split(r'[,\s]+', first_line) if p.strip()]
         
         # Check if first line is header (if 2nd col onwards are NOT floats)
         is_header = False
@@ -83,7 +84,7 @@ async def analyze_picked(
             if is_header and s == first_line:
                 continue
                 
-            parts = re.split(r'[,\s]+', s)
+            parts = [p for p in re.split(r'[,\s]+', s) if p.strip()]
             if len(parts) < 2: continue
             
             res_id_str_raw = parts[0]
@@ -107,9 +108,40 @@ async def analyze_picked(
         
         if not residue_data:
             raise HTTPException(status_code=400, detail="No valid residue data found")
+
+        # Validate H/N for CSP
+        h_idx = None
+        n_idx = None
+        
+        if calculate_csp:
+            if not is_header or len(feature_names) < 2:
+                raise HTTPException(status_code=400, detail="To calculate CSP, the data must have headers and at least two feature columns (e.g., delta_H and delta_N).")
+            
+            # Find the indices of H and N among the first two columns (feature_names[0] and feature_names[1])
+            col0 = feature_names[0].lower()
+            col1 = feature_names[1].lower()
+            
+            # Use regex to strictly identify H and N (avoids matching 'n' in 'Intensity')
+            def is_h_col(name): return bool(re.search(r'\b(h|1h|dh|delta_h)\b', name.replace('-','_'))) or name == 'h'
+            def is_n_col(name): return bool(re.search(r'\b(n|15n|dn|delta_n)\b', name.replace('-','_'))) or name == 'n'
+            
+            # Also allow simple fallback if exactly matching:
+            if not (is_h_col(col0) or is_n_col(col0)): 
+                if 'h' in col0 and 'n' not in col0: col0_is_h = True
+                else: col0_is_h = is_h_col(col0)
+            else: col0_is_h = is_h_col(col0)
+            
+            if col0_is_h and is_n_col(col1):
+                h_idx = 0
+                n_idx = 1
+            elif is_n_col(col0) and (is_h_col(col1) or 'h' in col1):
+                h_idx = 1
+                n_idx = 0
+            else:
+                raise HTTPException(status_code=400, detail=f"To calculate CSP, the first two feature columns must be H and N chemical shifts (in any order). Found: {feature_names[0]} and {feature_names[1]}")
         
         # Run PCA
-        result = run_residue_pca(residue_data, feature_names=feature_names)
+        result = run_residue_pca(residue_data, feature_names=feature_names, calculate_csp=calculate_csp, h_idx=h_idx, n_idx=n_idx)
         return result
         
     except Exception as e:

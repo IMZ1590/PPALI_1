@@ -1,10 +1,11 @@
 import numpy as np
 from sklearn.decomposition import PCA
 
-def run_residue_pca(residue_data, feature_names=None):
+def run_residue_pca(residue_data, feature_names=None, calculate_csp=False, h_idx=0, n_idx=1):
     """
     Performs PCA on multi-featured residue data.
     residue_data: List of lists [residue_id, feature1, feature2, ..., featureN]
+    calculate_csp: If true, calculates CSP using h_idx and n_idx.
     """
     data = np.array(residue_data)
     if data.ndim != 2 or data.shape[1] < 2:
@@ -17,6 +18,13 @@ def run_residue_pca(residue_data, feature_names=None):
     # Defaults for header names if not provided
     if not feature_names or len(feature_names) != n_features:
         feature_names = [f"Col {i+1}" for i in range(n_features)]
+        
+    csp_values = None
+    if calculate_csp and n_features >= 2 and h_idx is not None and n_idx is not None:
+        # Standard formula: CSP = sqrt( delta_H^2 + (delta_N / 5.88)^2 )
+        delta_h = features[:, h_idx]
+        delta_n = features[:, n_idx]
+        csp_values = np.sqrt(delta_h**2 + (delta_n / 5.88)**2)
     
     # Standardize features (Z-score normalization)
     # Manual standardization to avoid dependency if needed, but sklearn is in requirements
@@ -58,7 +66,7 @@ def run_residue_pca(residue_data, feature_names=None):
             "success": False 
         })
         
-    return {
+    ret = {
         "results": results,
         "variance_ratio": variance_ratio,
         "residue_nos": residue_nos.tolist(),
@@ -66,3 +74,10 @@ def run_residue_pca(residue_data, feature_names=None):
         "mahalanobis_dist": mahalanobis_dist.tolist(),
         "p_values": p_values.tolist()
     }
+    
+    if csp_values is not None:
+        ret["csp"] = csp_values.tolist()
+        ret["csp_h_col"] = feature_names[h_idx]
+        ret["csp_n_col"] = feature_names[n_idx]
+        
+    return ret

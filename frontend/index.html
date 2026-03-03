@@ -7,7 +7,7 @@
     <title>PALI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/ngl@2.0.0-dev.37/dist/ngl.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -142,7 +142,7 @@
                 <div class="text-sm text-sky-500 font-bold bg-sky-50 px-2 py-1 rounded inline-block mb-1">Demo
                     Ver.
                 </div>
-                <div class="text-[10px] text-slate-400">Last Release: 2026.02.13</div>
+                <div class="text-[10px] text-slate-400">Last Release: 2026.03.03</div>
             </div>
 
             <h1 class="text-4xl md:text-5xl font-bold mb-2 md:mb-4">
@@ -197,6 +197,13 @@
                             <textarea id="picked-data" rows="4" placeholder="Format: Residue, Δδ_H, Δδ_N, Intensity..."
                                 class="w-full bg-white border border-slate-200 rounded-lg px-3 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                                 oninput="if(this.value.trim().length > 0) hideExample(); else showExample();"></textarea>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="calc-csp-checkbox"
+                                class="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer">
+                            <label for="calc-csp-checkbox" class="text-sm font-medium text-slate-700 cursor-pointer">
+                                Calculate CSP (Requires H, N columns first)
+                            </label>
                         </div>
                         <button onclick="parsePickedData()"
                             class="w-full bg-indigo-600 hover:bg-indigo-500 text-slate-900 font-semibold py-2 text-white rounded-lg transition-colors">
@@ -282,104 +289,140 @@
                         </div>
                     </div>
 
+                    <!-- Distance Plot -->
+                    <div id="distance-plot-section" class="glass p-6 rounded-2xl hidden">
+                        <div class="tooltip-container mb-4">
+                            <h2 class="text-xl font-semibold text-slate-700">Mahalanobis Distance & Chemical Shift
+                                Perturbation</h2>
+                            <span class="tooltip-icon">?</span>
+                            <div class="tooltip-text">
+                                Displays the Mahalanobis Distance (Dm) and Chemical Shift Perturbation (CSP) per
+                                residue.
+                            </div>
+                        </div>
+                        <div id="distance-plot-container" class="h-[300px]"></div>
+                    </div>
+
                     <!-- Outlier Residues Table -->
 
                     <div id="outlier-section" class="glass p-6 rounded-2xl hidden top-6">
-                        <div class="tooltip-container mb-4">
-                            <h2 class="text-xl font-semibold text-black-600">Outlier Residues (Mahalanobis Distance)
-                            </h2>
-                            <span class="tooltip-icon">?</span>
-                            <div class="tooltip-text">
-                                Identifies residues that statistically deviate from the regular cluster.
-                                <strong>Mahalanobis Distance</strong> measures distance from the data center accounting
-                                for correlation.
-                                <strong>p-Value < 0.05</strong> indicates significant outliers.
-                            </div>
-                        </div>
-
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left text-slate-700">
-                                <thead class="text-xs text-slate-600 bg-slate-50/50">
-                                    <tr>
-                                        <th class="px-4 py-3">Residue No.</th>
-                                        <th class="px-4 py-3 text-center">PC1</th>
-                                        <th class="px-4 py-3 text-center">PC2</th>
-                                        <th class="px-4 py-3 text-center">PC3</th>
-                                        <th class="px-4 py-3 text-center">Mahalanobis</th>
-                                        <th class="px-4 py-3 text-center">p-Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="outlier-table-body">
-                                    <!-- Rows added dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- PDB Structure Viewer (Conditional) -->
-                    <div id="pdb-section" class="glass p-6 rounded-2xl hidden mt-6">
-                        <h2 class="text-xl font-semibold mb-4 text-slate-700">Protein Structure (Outlier Mapping)</h2>
-                        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                            <!-- PDB Upload Control -->
-                            <div class="lg:col-span-1 space-y-4">
-                                <label for="pdb-file-input"
-                                    class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all"
-                                    ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
-                                    ondragleave="this.classList.remove('border-indigo-500');"
-                                    ondrop="handlePDBDrop(event)">
-                                    <div
-                                        class="flex flex-col items-center justify-center pt-5 pb-6 text-center pointer-events-none">
-                                        <span class="text-3xl mb-2">🧬</span>
-                                        <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">Upload
-                                                PDB</span></p>
-                                        <p class="text-xs text-slate-400">Drag & Drop or Click</p>
-                                    </div>
-                                    <input id="pdb-file-input" type="file" class="hidden" accept=".pdb,.cif,.ent"
-                                        onchange="handlePDBUpload(event)" />
-                                </label>
-                                <div id="pdb-file-name" class="text-xs text-center text-indigo-600 font-medium h-4">
-                                </div>
-                                <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
-                                    <p class="font-semibold mb-1">Color Legend:</p>
-                                    <div class="flex items-center mb-1"><span
-                                            class="w-3 h-3 bg-rose-500 rounded-full mr-2"></span> Outliers (Red)</div>
-                                    <div class="flex items-center"><span
-                                            class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span> Others (Gray)</div>
-                                </div>
-
-                            </div>
-                            <!-- Viewer Container -->
-                            <div class="lg:col-span-3 flex flex-col space-y-2">
-                                <!-- Toolbar -->
-                                <div class="flex justify-end space-x-2">
-                                    <button onclick="handleToolbar('reset')"
-                                        class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Reset
-                                        View</button>
-                                    <button onclick="handleToolbar('spin')"
-                                        class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Spin</button>
-                                    <button onclick="handleToolbar('screenshot')"
-                                        class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">📸</button>
-                                </div>
-                                <div class="h-[400px] bg-white rounded-xl border border-slate-200 relative overflow-hidden"
-                                    id="ngl-viewport">
-                                    <!-- NGL Stage will be injected here -->
-                                    <div id="pdb-placeholder"
-                                        class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-10 bg-white">
-                                        <span class="text-4xl mb-4"></span>
-                                        <p class="text-lg font-semibold">Load PDB to view structure</p>
-                                        <p class="text-xs text-slate-500 mt-2">NGL Viewer Ready</p>
-                                    </div>
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="tooltip-container">
+                                <h2 class="text-xl font-semibold text-black-600">Outlier Residues (Mahalanobis Distance)
+                                </h2>
+                                <span class="tooltip-icon">?</span>
+                                <div class="tooltip-text">
+                                    Identifies residues that statistically deviate from the regular cluster.
+                                    <strong>Mahalanobis Distance</strong> measures distance from the data center
+                                    accounting
+                                    for correlation.
+                                    <strong>p-Value &lt; <span id="tooltip-p-val">0.05</span></strong> indicates
+                                    significant outliers.
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <div class="flex items-center space-x-3">
+                        <label for="pvalue-slider" class="text-sm font-medium text-slate-600">p-Value
+                            Threshold:</label>
+                        <div class="flex flex-col">
+                            <input type="range" id="pvalue-slider" min="0" max="3" step="1" value="1"
+                                oninput="updatePValueUI(this.value)" onchange="updateOutlierThreshold()"
+                                class="w-32 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            <div class="flex justify-between w-32 mt-1 text-[10px] text-slate-400 px-1">
+                                <span>0.1</span>
+                                <span>.05</span>
+                                <span>.01</span>
+                                <span>.005</span>
+                            </div>
+                        </div>
+                        <span id="pvalue-display" class="font-bold text-indigo-600 w-10 text-right">0.05</span>
+                        <input type="hidden" id="pvalue-threshold" value="0.05">
+                    </div>
+                </div>
 
-                    <!-- Titration/Residue Plots Grid (Restored) -->
-                    <div id="kd-plots" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-700">
+                        <thead class="text-xs text-slate-600 bg-slate-50/50">
+                            <tr>
+                                <th class="px-4 py-3">Residue No.</th>
+                                <th class="px-4 py-3 text-center">PC1</th>
+                                <th class="px-4 py-3 text-center">PC2</th>
+                                <th class="px-4 py-3 text-center">PC3</th>
+                                <th class="px-4 py-3 text-center">Mahalanobis</th>
+                                <th class="px-4 py-3 text-center">p-Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="outlier-table-body">
+                            <!-- Rows added dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PDB Structure Viewer (Conditional) -->
+            <div id="pdb-section" class="glass p-6 rounded-2xl hidden mt-6">
+                <h2 class="text-xl font-semibold mb-4 text-slate-700">Protein Structure (Outlier Mapping)</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- PDB Upload Control -->
+                    <div class="lg:col-span-1 space-y-4">
+                        <label for="pdb-file-input"
+                            class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all"
+                            ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
+                            ondragleave="this.classList.remove('border-indigo-500');" ondrop="handlePDBDrop(event)">
+                            <div
+                                class="flex flex-col items-center justify-center pt-5 pb-6 text-center pointer-events-none">
+                                <span class="text-3xl mb-2">🧬</span>
+                                <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">Upload
+                                        PDB</span></p>
+                                <p class="text-xs text-slate-400">Drag & Drop or Click</p>
+                            </div>
+                            <input id="pdb-file-input" type="file" class="hidden" accept=".pdb,.cif,.ent"
+                                onchange="handlePDBUpload(event)" />
+                        </label>
+                        <div id="pdb-file-name" class="text-xs text-center text-indigo-600 font-medium h-4">
+                        </div>
+                        <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
+                            <p class="font-semibold mb-1">Color Legend:</p>
+                            <div class="flex items-center mb-1"><span
+                                    class="w-3 h-3 bg-rose-500 rounded-full mr-2"></span> Outliers (Red)</div>
+                            <div class="flex items-center"><span class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span>
+                                Others (Gray)</div>
+                        </div>
+
+                    </div>
+                    <!-- Viewer Container -->
+                    <div class="lg:col-span-3 flex flex-col space-y-2">
+                        <!-- Toolbar -->
+                        <div class="flex justify-end space-x-2">
+                            <button onclick="handleToolbar('reset')"
+                                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Reset
+                                View</button>
+                            <button onclick="handleToolbar('spin')"
+                                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">Spin</button>
+                            <button onclick="handleToolbar('screenshot')"
+                                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-xs transition-colors">📸</button>
+                        </div>
+                        <div class="h-[400px] bg-white rounded-xl border border-slate-200 relative overflow-hidden"
+                            id="ngl-viewport">
+                            <!-- NGL Stage will be injected here -->
+                            <div id="pdb-placeholder"
+                                class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-10 bg-white">
+                                <span class="text-4xl mb-4"></span>
+                                <p class="text-lg font-semibold">Load PDB to view structure</p>
+                                <p class="text-xs text-slate-500 mt-2">NGL Viewer Ready</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Titration/Residue Plots Grid (Restored) -->
+            <div id="kd-plots" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            </div>
         </div>
+    </div>
+    </div>
     </div>
 
     <script>
@@ -464,6 +507,8 @@
             lines.forEach(line => {
                 formData.append('intensities', line.trim());
             });
+            const isCspChecked = document.getElementById('calc-csp-checkbox')?.checked || false;
+            formData.append('calculate_csp', isCspChecked);
 
             try {
                 const response = await fetch(`${API_BASE}/analyze_picked`, {
@@ -494,6 +539,7 @@
                 document.getElementById('pca-3d-section').classList.add('hidden');
                 document.getElementById('outlier-section').classList.add('hidden');
                 document.getElementById('loading-section').classList.add('hidden');
+                document.getElementById('distance-plot-section').classList.add('hidden');
 
                 renderKdFits(data);
                 return;
@@ -514,15 +560,18 @@
                 document.getElementById('outlier-section').classList.remove('hidden');
                 document.getElementById('loading-section').classList.remove('hidden');
                 document.getElementById('pdb-section').classList.remove('hidden'); // Fix PDB visibility
+                document.getElementById('distance-plot-section').classList.remove('hidden');
                 if (stage) stage.handleResize();
                 render3DPCA(data);
                 renderOutlierTable(data);
                 renderLoadings(data);
+                renderDistancePlot(data);
             } else {
                 document.getElementById('pca-3d-section').classList.add('hidden');
                 document.getElementById('outlier-section').classList.add('hidden');
                 document.getElementById('loading-section').classList.add('hidden');
                 document.getElementById('pdb-section').classList.add('hidden');
+                document.getElementById('distance-plot-section').classList.add('hidden');
             }
 
             renderKdFits(data);
@@ -543,17 +592,23 @@
                 const s3 = data.results[2]?.scores[idx] || 0;
                 const m = data.mahalanobis_dist ? data.mahalanobis_dist[idx] : null;
                 const p = data.p_values ? data.p_values[idx] : null;
-                const isOutlier = p !== null && p < 0.05 ? "Yes" : "No";
+                const pValueThreshold = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
+                const isOutlier = p !== null && p < pValueThreshold ? "Yes" : "No";
 
-                return {
+                let row = {
                     "Residue No": resNo,
                     "PC1 Score": s1,
                     "PC2 Score": s2,
                     "PC3 Score": s3,
                     "Mahalanobis Dist": m,
                     "P-value": p,
-                    "Outlier (P<0.05)": isOutlier
+                    ["Outlier (P<" + pValueThreshold + ")"]: isOutlier
                 };
+
+                if (data.csp) {
+                    row["CSP"] = data.csp[idx];
+                }
+                return row;
             });
             const wsScores = XLSX.utils.json_to_sheet(scoresData);
             XLSX.utils.book_append_sheet(wb, wsScores, "Scores & Outliers");
@@ -587,13 +642,32 @@
             XLSX.writeFile(wb, "PALI_PCA_Results.xlsx");
         }
 
+        function updatePValueUI(sliderIndex) {
+            const values = [0.1, 0.05, 0.01, 0.005];
+            const val = values[parseInt(sliderIndex)];
+            document.getElementById('pvalue-display').textContent = val;
+            document.getElementById('pvalue-threshold').value = val;
+        }
+
+        function updateOutlierThreshold() {
+            if (window.currentAnalysisData) {
+                renderOutlierTable(window.currentAnalysisData);
+                render3DPCA(window.currentAnalysisData);
+                renderDistancePlot(window.currentAnalysisData);
+            }
+        }
+
         function renderOutlierTable(data) {
             const body = document.getElementById('outlier-table-body');
             body.innerHTML = '';
 
             // Thresholds
             const EUCLIDEAN_THRESHOLD = 3.0;
-            const P_VALUE_THRESHOLD = 0.05;
+            const P_VALUE_THRESHOLD = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
+
+            // Update tooltip text to reflect current threshold
+            const tooltipSpan = document.getElementById('tooltip-p-val');
+            if (tooltipSpan) tooltipSpan.textContent = P_VALUE_THRESHOLD;
 
             // Reset Global Outliers
             currentOutliers = [];
@@ -657,7 +731,7 @@
             });
 
             if (body.innerHTML === '') {
-                body.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 italic">No significant outliers detected (P < 0.05)</td></tr>';
+                body.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500 italic">No significant outliers detected (P < ${P_VALUE_THRESHOLD})</td></tr>`;
             }
 
             // Update PDB Coloring if loaded
@@ -686,9 +760,8 @@
                 const xValues = Object.keys(res.loadings);
                 const yValues = Object.values(res.loadings);
 
-                // Sort by absolute loading value to show most influential features first
-                const combined = xValues.map((name, i) => ({ name, val: yValues[i], abs: Math.abs(yValues[i]) }));
-                combined.sort((a, b) => b.abs - a.abs);
+                // Do not sort by absolute loading value to keep original column order
+                const combined = xValues.map((name, i) => ({ name, val: yValues[i] }));
 
                 const trace = {
                     x: combined.map(c => c.name),
@@ -733,11 +806,12 @@
         }
 
         function render3DPCA(data) {
-            if (data.results.length < 3) return;
+            if (data.results.length < 2) return; // Need at least 2 PCs
 
-            // Use P-value threshold (0.05) instead of Euclidean distance
-            const P_VALUE_THRESHOLD = 0.05;
+            // Use P-value threshold instead of Euclidean distance
+            const P_VALUE_THRESHOLD = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
             const hasStats = data.p_values && data.p_values.length === data.residue_nos.length;
+            const is3D = data.results.length >= 3;
 
             const textLabels = data.residue_nos.map((r, idx) => {
                 let isOutlier = false;
@@ -747,39 +821,155 @@
                     // Fallback to legacy distance if stats missing (shouldn't happen)
                     const s1 = data.results[0].scores[idx];
                     const s2 = data.results[1]?.scores[idx] || 0;
-                    const s3 = data.results[2]?.scores[idx] || 0;
+                    const s3 = is3D ? data.results[2].scores[idx] : 0;
                     const dist = Math.sqrt(s1 * s1 + s2 * s2 + s3 * s3);
                     if (dist > 3.0) isOutlier = true;
                 }
                 return isOutlier ? `Res ${r}` : '';
             });
 
-            const traces = [{
+            const trace = {
                 x: data.results[0].scores,
                 y: data.results[1].scores,
-                z: data.results[2].scores,
                 mode: 'markers+text',
-                type: 'scatter3d',
+                type: is3D ? 'scatter3d' : 'scatter',
                 text: textLabels,
                 textposition: 'top center',
                 marker: {
-                    size: 4,
+                    size: is3D ? 4 : 8,
                     color: textLabels.map(l => l ? '#fb7185' : '#38bdf8'), // Red for outliers, Blue for normal
                     opacity: 0.8
                 }
-            }];
+            };
+
+            if (is3D) {
+                trace.z = data.results[2].scores;
+            }
+
             const layout = {
                 paper_bgcolor: 'rgba(0,0,0,0)',
-                scene: {
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                font: { color: '#94a3b8', size: 10 }
+            };
+
+            if (is3D) {
+                layout.scene = {
                     xaxis: { title: 'PC1', gridcolor: '#334155' },
                     yaxis: { title: 'PC2', gridcolor: '#334155' },
                     zaxis: { title: 'PC3', gridcolor: '#334155' },
                     bgcolor: 'rgba(0,0,0,0)'
-                },
-                margin: { t: 0, b: 0, l: 0, r: 0 },
-                font: { color: '#94a3b8', size: 10 }
-            };
-            Plotly.newPlot('pca-3d-plot', traces, layout);
+                };
+            } else {
+                layout.xaxis = { title: 'PC1', gridcolor: '#334155' };
+                layout.yaxis = { title: 'PC2', gridcolor: '#334155' };
+                layout.plot_bgcolor = 'rgba(0,0,0,0)';
+                layout.margin = { t: 30, b: 40, l: 40, r: 10 };
+            }
+
+            // Update Header dynamically depending on if it is 2D or 3D
+            const pcaSectionHeader = document.querySelector("#pca-3d-section h2");
+            if (pcaSectionHeader) {
+                pcaSectionHeader.textContent = is3D ? "3D Residue Space (PCA)" : "2D Residue Space (PCA)";
+            }
+
+            Plotly.newPlot('pca-3d-plot', [trace], layout);
+        }
+
+        function renderDistancePlot(data) {
+            const container = document.getElementById('distance-plot-container');
+            if (!container) return;
+
+            // Clear previous if any
+            container.innerHTML = '';
+
+            // We want two plots vertically stacked to avoid horizontal collision in Plotly.
+            container.className = "flex flex-col gap-8 w-full";
+            container.style.height = 'auto'; // ensure parent doesn't constrain it to 300px
+
+            const residues = data.residue_nos;
+
+            if (data.mahalanobis_dist) {
+                const dmDiv = document.createElement('div');
+                dmDiv.style.height = '250px';
+                dmDiv.className = 'w-full';
+                container.appendChild(dmDiv);
+
+                const pValueThreshold = parseFloat(document.getElementById('pvalue-threshold')?.value || "0.05");
+                const dmColors = data.mahalanobis_dist.map((dm, idx) => {
+                    const p = data.p_values ? data.p_values[idx] : 1;
+                    return p < pValueThreshold ? '#a855f7' : '#e2e8f0'; // Purple for outliers, grey for normal
+                });
+
+                const trace = {
+                    x: residues,
+                    y: data.mahalanobis_dist,
+                    type: 'bar',
+                    name: 'D<sub>M</sub>',
+                    marker: { color: dmColors },
+                };
+
+                const layout = {
+                    title: { text: "Mahalanobis Distance (D<sub>M</sub>)", font: { color: '#a855f7', size: 14 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#94a3b8', size: 10 },
+                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
+                    yaxis: { title: 'D<sub>M</sub>', gridcolor: '#334155' },
+                    margin: { t: 40, b: 50, l: 50, r: 20 },
+                    showlegend: false
+                };
+                Plotly.newPlot(dmDiv, [trace], layout);
+            }
+
+            if (data.csp) {
+                const cspDiv = document.createElement('div');
+                cspDiv.style.height = '250px';
+                cspDiv.className = 'w-full';
+                container.appendChild(cspDiv);
+
+                const sum = data.csp.reduce((a, b) => a + b, 0);
+                const mean = sum / data.csp.length;
+                const sd = Math.sqrt(data.csp.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / data.csp.length);
+
+                const cspColors = data.csp.map(v => {
+                    if (v >= mean + 2 * sd) return '#fb7185'; // Red for >= 2 sigma
+                    if (v >= mean + 1 * sd) return '#38bdf8'; // Blue for >= 1 sigma
+                    return '#e2e8f0'; // Gray for normal
+                });
+
+                const trace = {
+                    x: residues,
+                    y: data.csp,
+                    type: 'bar',
+                    name: 'CSP',
+                    marker: { color: cspColors }
+                };
+
+                const layout = {
+                    title: { text: "Chemical Shift Perturbation (CSP)", font: { color: '#38bdf8', size: 14 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#94a3b8', size: 10 },
+                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
+                    yaxis: { title: 'CSP', gridcolor: '#334155' },
+                    margin: { t: 40, b: 50, l: 50, r: 20 },
+                    showlegend: false
+                };
+
+                // Add sigma lines
+                layout.shapes = [
+                    {
+                        type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + sd, y1: mean + sd, yref: 'y',
+                        line: { color: '#38bdf8', width: 1, dash: 'dash' }
+                    },
+                    {
+                        type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + 2 * sd, y1: mean + 2 * sd, yref: 'y',
+                        line: { color: '#fb7185', width: 1, dash: 'dash' }
+                    }
+                ];
+
+                Plotly.newPlot(cspDiv, [trace], layout);
+            }
         }
 
         function renderKdFits(data) {
