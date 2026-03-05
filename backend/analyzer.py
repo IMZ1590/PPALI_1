@@ -35,7 +35,7 @@ def run_residue_pca(residue_data, feature_names=None, calculate_csp=False, h_idx
     features_scaled = (features - mean) / std
     
     # PCA
-    n_components = min(3, n_features, features.shape[0])
+    n_components = min(n_features, features.shape[0])
     pca = PCA(n_components=n_components)
     scores = pca.fit_transform(features_scaled)
     loadings = pca.components_ 
