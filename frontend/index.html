@@ -768,7 +768,7 @@
                     y: combined.map(c => c.val),
                     type: 'bar',
                     marker: {
-                        color: combined.map(c => c.val >= 0 ? '#38bdf8' : '#fb7185')
+                        color: combined.map(c => c.val >= 0 ? '#fb7185' : '#38bdf8')
                     }
                 };
 
@@ -934,7 +934,7 @@
                 const pValueThreshold = parseFloat(document.getElementById('pvalue-threshold')?.value || "0.05");
                 const dmColors = data.mahalanobis_dist.map((dm, idx) => {
                     const p = data.p_values ? data.p_values[idx] : 1;
-                    return p < pValueThreshold ? '#a855f7' : '#e2e8f0'; // Purple for outliers, grey for normal
+                    return p < pValueThreshold ? '#fb7185' : '#e2e8f0'; // Red for outliers, grey for normal
                 });
 
                 const trace = {
@@ -946,7 +946,7 @@
                 };
 
                 const layout = {
-                    title: { text: "Mahalanobis Distance (D<sub>M</sub>)", font: { color: '#a855f7', size: 14 } },
+                    title: { text: "Mahalanobis Distance (D<sub>M</sub>)", font: { color: '#fb7185', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
@@ -969,7 +969,7 @@
                 const sd = Math.sqrt(data.csp.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / data.csp.length);
 
                 const cspColors = data.csp.map(v => {
-                    if (v >= mean + 2 * sd) return '#fb7185'; // Red for >= 2 sigma
+                    if (v >= mean + 2 * sd) return '#a855f7'; // Purple for >= 2 sigma
                     if (v >= mean + 1 * sd) return '#38bdf8'; // Blue for >= 1 sigma
                     return '#e2e8f0'; // Gray for normal
                 });
@@ -1001,7 +1001,7 @@
                     },
                     {
                         type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + 2 * sd, y1: mean + 2 * sd, yref: 'y',
-                        line: { color: '#fb7185', width: 1, dash: 'dash' }
+                        line: { color: '#a855f7', width: 1, dash: 'dash' }
                     }
                 ];
 
