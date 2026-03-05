@@ -787,51 +787,56 @@
         }
 
         function renderVariance(data) {
+            // 1. 모든 PC 데이터 매핑
             const labels = data.results.map(r => `PC${r.pc_index}`);
             const values = data.variance_ratio.map(v => v * 100);
+
+            // PC 개수에 상관없이 사용할 수 있는 색상 팔레트 (부족하면 반복)
+            const baseColors = ['#38bdf8', '#818cf8', '#a855f7', '#ec4899', '#f59e0b', '#10b981'];
+            const colors = values.map((_, i) => baseColors[i % baseColors.length]);
 
             const traces = [{
                 x: labels,
                 y: values,
                 type: 'bar',
                 marker: {
-                    color: ['#38bdf8', '#818cf8', '#a855f7'],
+                    color: colors,
                     line: { color: 'white', width: 1 }
                 },
-                // 1. 텍스트 설정 수정
+                // 텍스트 설정: 막대 내부 배치 및 크기 확대
                 text: values.map(v => `${v.toFixed(1)}%`),
-                textposition: 'auto', // 네모 그래프 안으로 배치
+                textposition: 'auto',
                 textfont: {
-                    size: 14,          // 글씨 크기 확대 (기존 10에서 14로)
-                    color: '#ffffff',  // 막대 색상이 어두우므로 흰색으로 설정
+                    size: 14,          // 글씨 크기 확대
+                    color: '#ffffff',  // 흰색 글자
                     family: 'Arial, sans-serif',
-                    weight: 'bold'      // 가독성을 위해 볼드체 추가
-                }
+                    weight: 'bold'     // 볼드체 적용
+                },
+                cliponaxis: false
             }];
 
             const layout = {
                 paper_bgcolor: 'rgba(0,0,0,0)',
                 plot_bgcolor: 'rgba(0,0,0,0)',
-                // 전체 폰트 크기 조정 (기본 크기)
                 font: { color: '#94a3b8', size: 12 },
                 xaxis: {
                     title: 'Component',
                     showgrid: false,
-                    linecolor: '#475569'
+                    linecolor: '#475569',
+                    // PC가 많아질 경우 글자가 겹치지 않게 각도 조절 가능
+                    tickangle: values.length > 5 ? -45 : 0
                 },
                 yaxis: {
                     title: 'Variance (%)',
-                    showticklabels: true,
-                    showgrid: true,
+                    showticklabels: true, // Y축 수치 표시
+                    showgrid: true,       // 그리드 표시
                     gridcolor: '#334155',
                     zeroline: true,
                     zerolinecolor: '#475569',
-                    // 막대 안에 텍스트가 들어가므로 범위를 타이트하게 조정 가능
-                    range: [0, Math.max(...values) * 1.05]
+                    range: [0, Math.max(...values) * 1.1] // 상단 여유 확보
                 },
-                // 축 라벨 공간 확보 (수치 표시용)
-                margin: { t: 20, b: 40, l: 50, r: 20 },
-                height: 250
+                margin: { t: 20, b: 60, l: 50, r: 20 },
+                height: 300 // PC가 많아질 것에 대비해 높이 약간 상향
             };
 
             Plotly.newPlot('variance-plot', traces, layout);
