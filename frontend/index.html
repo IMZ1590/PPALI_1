@@ -789,19 +789,51 @@
         function renderVariance(data) {
             const labels = data.results.map(r => `PC${r.pc_index}`);
             const values = data.variance_ratio.map(v => v * 100);
+
             const traces = [{
-                x: labels, y: values, type: 'bar',
-                marker: { color: ['#38bdf8', '#818cf8', '#a855f7'], line: { color: 'white', width: 1 } },
-                text: values.map(v => `${v.toFixed(1)}%`), textposition: 'auto',
+                x: labels,
+                y: values,
+                type: 'bar',
+                marker: {
+                    color: ['#38bdf8', '#818cf8', '#a855f7'],
+                    line: { color: 'white', width: 1 }
+                },
+                // 1. 텍스트 설정 수정
+                text: values.map(v => `${v.toFixed(1)}%`),
+                textposition: 'auto', // 네모 그래프 안으로 배치
+                textfont: {
+                    size: 14,          // 글씨 크기 확대 (기존 10에서 14로)
+                    color: '#ffffff',  // 막대 색상이 어두우므로 흰색으로 설정
+                    family: 'Arial, sans-serif',
+                    weight: 'bold'      // 가독성을 위해 볼드체 추가
+                }
             }];
+
             const layout = {
-                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-                font: { color: '#94a3b8', size: 10 },
-                xaxis: { title: 'Component', showgrid: false },
-                yaxis: { title: '', showticklabels: false, showline: false, zeroline: false, showgrid: false, range: [0, 100] },
-                margin: { t: 10, b: 30, l: 10, r: 10 },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                // 전체 폰트 크기 조정 (기본 크기)
+                font: { color: '#94a3b8', size: 12 },
+                xaxis: {
+                    title: 'Component',
+                    showgrid: false,
+                    linecolor: '#475569'
+                },
+                yaxis: {
+                    title: 'Variance (%)',
+                    showticklabels: true,
+                    showgrid: true,
+                    gridcolor: '#334155',
+                    zeroline: true,
+                    zerolinecolor: '#475569',
+                    // 막대 안에 텍스트가 들어가므로 범위를 타이트하게 조정 가능
+                    range: [0, Math.max(...values) * 1.05]
+                },
+                // 축 라벨 공간 확보 (수치 표시용)
+                margin: { t: 20, b: 40, l: 50, r: 20 },
                 height: 250
             };
+
             Plotly.newPlot('variance-plot', traces, layout);
         }
 
