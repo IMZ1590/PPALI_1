@@ -245,6 +245,17 @@
                 <div id="results-container" class="hidden flex flex-col gap-10 mt-4">
                     <!-- Row 1: Variance & 3D (Restored Side by Side) -->
                     <div class="grid grid-cols-2 gap-2">
+                        <!-- 3D Residue Space (Visible only in Picked mode) -->
+                        <div id="pca-3d-section" class="glass p-6 rounded-2xl min-h-[400px] hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-xl font-semibold text-slate-700">3D Residue Space (PCA)</h2>
+                                <button onclick="exportResultsToExcel(window.currentAnalysisData)"
+                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-colors flex items-center">
+                                    <span class="mr-1">📊</span> Export to Excel
+                                </button>
+                            </div>
+                            <div id="pca-3d-plot" class="h-[350px]"></div>
+                        </div>
                         <!-- Variance Plot (PC1-3 Percentile) -->
                         <div class="glass p-6 rounded-2xl min-h-[300px]">
                             <div class="tooltip-container mb-4">
@@ -258,49 +269,6 @@
                             </div>
                             <div id="variance-plot" class="h-[250px]"></div>
                         </div>
-                        <!-- 3D Residue Space (Visible only in Picked mode) -->
-                        <div id="pca-3d-section" class="glass p-6 rounded-2xl min-h-[400px] hidden">
-                            <div class="flex justify-between items-center mb-4">
-                                <h2 class="text-xl font-semibold text-slate-700">3D Residue Space (PCA)</h2>
-                                <button onclick="exportResultsToExcel(window.currentAnalysisData)"
-                                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-md transition-colors flex items-center">
-                                    <span class="mr-1">📊</span> Export to Excel
-                                </button>
-                            </div>
-                            <div id="pca-3d-plot" class="h-[350px]"></div>
-                        </div>
-                    </div>
-
-                    <!-- Loading Contributions (Restored) -->
-                    <div id="loading-section" class="glass p-6 rounded-2xl hidden">
-                        <div class="tooltip-container mb-4">
-                            <h2 class="text-xl font-semibold text-slate-700">Feature Contributions (PCA Loadings)
-                            </h2>
-                            <span class="tooltip-icon">?</span>
-                            <div class="tooltip-text">
-                                Indicates which input features (e.g., chemical shifts or intensities) contributed
-                                most to each PC.
-                                Taller bars mean that specific variable had a stronger influence on the separation seen
-                                in the PCA plot.
-                            </div>
-                        </div>
-                        <div id="loading-plots" class="grid grid-cols-3 gap-2">
-                            <!-- Plots added dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Distance Plot -->
-                    <div id="distance-plot-section" class="glass p-6 rounded-2xl hidden">
-                        <div class="tooltip-container mb-4">
-                            <h2 class="text-xl font-semibold text-slate-700">Mahalanobis Distance & Chemical Shift
-                                Perturbation</h2>
-                            <span class="tooltip-icon">?</span>
-                            <div class="tooltip-text">
-                                Displays the Mahalanobis Distance (Dm) and Chemical Shift Perturbation (CSP) per
-                                residue.
-                            </div>
-                        </div>
-                        <div id="distance-plot-container" class="h-[300px]"></div>
                     </div>
 
                     <!-- Outlier Residues Table -->
@@ -357,6 +325,39 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- Distance Plot -->
+                    <div id="distance-plot-section" class="glass p-6 rounded-2xl hidden">
+                        <div class="tooltip-container mb-4">
+                            <h2 class="text-xl font-semibold text-slate-700">Mahalanobis Distance & Chemical Shift
+                                Perturbation</h2>
+                            <span class="tooltip-icon">?</span>
+                            <div class="tooltip-text">
+                                Displays the Mahalanobis Distance (Dm) and Chemical Shift Perturbation (CSP) per
+                                residue.
+                            </div>
+                        </div>
+                        <div id="distance-plot-container" class="h-[300px]"></div>
+                    </div>
+
+                    <!-- Loading Contributions (Restored) -->
+                    <div id="loading-section" class="glass p-6 rounded-2xl hidden">
+                        <div class="tooltip-container mb-4">
+                            <h2 class="text-xl font-semibold text-slate-700">Feature Contributions (PCA Loadings)
+                            </h2>
+                            <span class="tooltip-icon">?</span>
+                            <div class="tooltip-text">
+                                Indicates which input features (e.g., chemical shifts or intensities) contributed
+                                most to each PC.
+                                Taller bars mean that specific variable had a stronger influence on the separation seen
+                                in the PCA plot.
+                            </div>
+                        </div>
+                        <div id="loading-plots" class="grid grid-cols-3 gap-2">
+                            <!-- Plots added dynamically -->
+                        </div>
+                    </div>
+
                 </div>
 
                 <!-- PDB Structure Viewer (Conditional) -->
