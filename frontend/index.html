@@ -365,19 +365,32 @@
                         <!-- PDB Upload Control -->
                         <div class="lg:col-span-1 space-y-4">
                             <label for="pdb-file-input"
-                                class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all"
+                                class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-all"
                                 ondragover="event.preventDefault(); this.classList.add('border-indigo-500');"
                                 ondragleave="this.classList.remove('border-indigo-500');" ondrop="handlePDBDrop(event)">
                                 <div
-                                    class="flex flex-col items-center justify-center pt-5 pb-6 text-center pointer-events-none">
-                                    <span class="text-3xl mb-2">🧬</span>
-                                    <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">Upload
-                                            PDB</span></p>
+                                    class="flex flex-col items-center justify-center pt-3 pb-4 text-center pointer-events-none">
+                                    <span class="text-2xl mb-1">🧬</span>
+                                    <p class="mb-1 text-sm text-slate-500"><span class="font-semibold">Upload PDB</span></p>
                                     <p class="text-xs text-slate-400">Drag & Drop or Click</p>
                                 </div>
                                 <input id="pdb-file-input" type="file" class="hidden" accept=".pdb,.cif,.ent"
                                     onchange="handlePDBUpload(event)" />
                             </label>
+                            <div class="relative flex items-center">
+                                <div class="flex-grow border-t border-slate-200"></div>
+                                <span class="px-3 text-xs text-slate-400">or</span>
+                                <div class="flex-grow border-t border-slate-200"></div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <input id="pdb-code-input" type="text" maxlength="4" placeholder="PDB ID"
+                                    class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm font-mono text-center uppercase tracking-widest outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                    onkeydown="if(event.key==='Enter') loadPDBFromCode()">
+                                <button onclick="loadPDBFromCode()"
+                                    class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-md">
+                                    Load
+                                </button>
+                            </div>
                             <div id="pdb-file-name" class="text-xs text-center text-indigo-600 font-medium h-4">
                             </div>
                             <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
@@ -387,6 +400,20 @@
                                 <div class="flex items-center"><span
                                         class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span>
                                     Others (Gray)</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="flex items-center space-x-1">
+                                    <label class="text-xs text-slate-600 font-semibold whitespace-nowrap">Chain</label>
+                                    <input id="pdb-chain" type="text" maxlength="2" placeholder="All" value=""
+                                        class="w-14 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-sm font-mono text-center uppercase outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                        onchange="reapplyColoring()">
+                                </div>
+                                <div class="flex items-center space-x-1">
+                                    <label class="text-xs text-slate-600 font-semibold whitespace-nowrap">1st Res</label>
+                                    <input id="pdb-first-res" type="number" value="" placeholder="auto"
+                                        class="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                                        onchange="reapplyColoring()">
+                                </div>
                             </div>
 
                         </div>
@@ -713,7 +740,7 @@
                 // Actually, let's just stick to the main stat criteria to keep it clean.
 
                 if (isOutlier) {
-                    currentOutliers.push(resNo);
+                    currentOutliers.push(parseInt(resNo));
 
                     const tr = document.createElement('tr');
                     tr.className = 'border-b border-slate-200/50 hover:bg-slate-50/30 transition-colors';
@@ -1018,7 +1045,7 @@
                 const scores1 = data.results[0].scores.map(Math.abs);
                 const mean1 = scores1.reduce((a, b) => a + b, 0) / scores1.length;
                 const sd1 = Math.sqrt(scores1.reduce((a, b) => a + Math.pow(b - mean1, 2), 0) / scores1.length);
-                const threshold1 = mean1 + sd1;
+                const threshold1 = mean1 + 2 * sd1;
 
                 const colors1 = scores1.map(v => v >= threshold1 ? '#38bdf8' : '#e2e8f0');
 
@@ -1058,7 +1085,7 @@
                 const scores2 = data.results[1].scores.map(Math.abs);
                 const mean2 = scores2.reduce((a, b) => a + b, 0) / scores2.length;
                 const sd2 = Math.sqrt(scores2.reduce((a, b) => a + Math.pow(b - mean2, 2), 0) / scores2.length);
-                const threshold2 = mean2 + sd2;
+                const threshold2 = mean2 + 2 * sd2;
 
                 const colors2 = scores2.map(v => v >= threshold2 ? '#818cf8' : '#e2e8f0');
 
@@ -1098,7 +1125,7 @@
                 const scores3 = data.results[2].scores.map(Math.abs);
                 const mean3 = scores3.reduce((a, b) => a + b, 0) / scores3.length;
                 const sd3 = Math.sqrt(scores3.reduce((a, b) => a + Math.pow(b - mean3, 2), 0) / scores3.length);
-                const threshold3 = mean3 + sd3;
+                const threshold3 = mean3 + 2 * sd3;
 
                 const colors3 = scores3.map(v => v >= threshold3 ? '#a855f7' : '#e2e8f0');
 
@@ -1332,17 +1359,10 @@
         function loadPDB(file) {
             const reader = new FileReader();
 
-            // Set file name
             const nameEl = document.getElementById('pdb-file-name');
-            nameEl.textContent = file.name;
-            if (nameEl) {
-                nameEl.textContent = file.name;
-                // Hide Drag Text / Show Loaded state?
-                // Just text update is fine
-            }
+            if (nameEl) nameEl.textContent = file.name;
 
             reader.onload = function (e) {
-                // Hide Placeholder
                 document.getElementById('pdb-placeholder').classList.add('hidden');
 
                 const ext = file.name.split('.').pop().toLowerCase();
@@ -1362,6 +1382,58 @@
             reader.readAsText(file);
         }
 
+        async function loadPDBFromCode() {
+            const input = document.getElementById('pdb-code-input');
+            const code = input.value.trim().toUpperCase();
+            if (!code || code.length !== 4) {
+                return alert('Please enter a valid 4-letter PDB code (e.g., 1UBQ)');
+            }
+
+            const nameEl = document.getElementById('pdb-file-name');
+            if (nameEl) nameEl.textContent = `Loading ${code}...`;
+
+            const url = `https://files.rcsb.org/download/${code}.pdb`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    // Try mmCIF format as fallback
+                    const cifUrl = `https://files.rcsb.org/download/${code}.cif`;
+                    const cifResponse = await fetch(cifUrl);
+                    if (!cifResponse.ok) {
+                        throw new Error(`PDB ID "${code}" not found on RCSB`);
+                    }
+                    const cifText = await cifResponse.text();
+                    loadPDBFromText(cifText, 'cif', code);
+                    return;
+                }
+                const pdbText = await response.text();
+                loadPDBFromText(pdbText, 'pdb', code);
+            } catch (err) {
+                if (nameEl) nameEl.textContent = '';
+                alert('Failed to load PDB: ' + err.message);
+            }
+        }
+
+        function loadPDBFromText(text, ext, code) {
+            const nameEl = document.getElementById('pdb-file-name');
+            if (nameEl) nameEl.textContent = `${code}.${ext}`;
+
+            document.getElementById('pdb-placeholder').classList.add('hidden');
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            stage.removeAllComponents();
+
+            stage.loadFile(blob, { ext: ext }).then(function (component) {
+                if (currentOutliers.length > 0) {
+                    applyOutlierColoring(component);
+                } else {
+                    component.addRepresentation("cartoon", { color: "lightgray" });
+                }
+                component.autoView();
+            });
+        }
+
 
         // Global variable for offset calculation
         let firstResidueNo = 1;
@@ -1375,75 +1447,31 @@
         function applyOutlierColoring(component) {
             if (!component) return;
 
-            // --- Renumbering Logic ---
-            // Goal: Shift PDB residue numbers so they match the CSV numbering.
-            // Example: CSV starts at 86. PDB starts at 1. We start PDB at 86.
-
-            // 1. Determine CSV Start
-            let csvStart = 1; // Default
-            if (window.currentAnalysisData && window.currentAnalysisData.residue_nos && window.currentAnalysisData.residue_nos.length > 0) {
-                const parsed = parseInt(window.currentAnalysisData.residue_nos[0]);
-                if (!isNaN(parsed)) csvStart = parsed;
-            }
-
-            // 2. Determine PDB Original Start (Only once)
-            if (typeof component.originalStart === 'undefined') {
-                // Find the first residue number in the structure
-                let firstRes = null;
-                component.structure.eachResidue(function (rp) {
-                    if (firstRes === null) firstRes = rp.resno;
-                });
-                component.originalStart = (firstRes !== null) ? firstRes : 1;
-                component.currentShift = 0;
-            }
-
-            // 3. Calculate Needed Shift
-            // We want: (OriginalPDB + Shift) = CSV_Start
-            // But wait, we want the FIRST PDB residue to align with FIRST CSV residue.
-            // So: component.originalStart + TotalShift = csvStart
-            // TotalShift = csvStart - component.originalStart
-            const totalNeededShift = csvStart - component.originalStart;
-
-            // 4. Apply Incremental Shift
-            const incrementalShift = totalNeededShift - component.currentShift;
-
-            if (incrementalShift !== 0) {
-                console.log(`Renumbering PDB: Shift ${incrementalShift} (Total: ${totalNeededShift}). Aligning PDB ${component.originalStart} to CSV ${csvStart}`);
-                component.structure.eachResidue(function (rp) {
-                    rp.resno += incrementalShift;
-                });
-                // Update tracking
-                component.currentShift = totalNeededShift;
-
-                // NGL might need notification to update spatial index / internal arrays?
-                // Usually direct prop mod works for labelling, but for selection it helps to clear cache if any.
-                // component.structure.spatialHash = null; // Sometimes needed, but try without first.
-            }
-
             // Remove previous reps
             component.removeAllRepresentations();
 
-            // --- Selection Logic ---
-            // Now that PDB is renumbered to match CSV, we can use currentOutliers directly!
-            let selectionString = "";
-            let schemeId = "uniform";
+            // Chain filter
+            const chainInput = document.getElementById('pdb-chain');
+            const chain = chainInput ? chainInput.value.trim().toUpperCase() : '';
+            const chainSele = chain ? `:${chain}` : '';
 
+            // Use CSV residue numbers directly for PDB selection
+            let selectionString = "";
             if (currentOutliers && currentOutliers.length > 0) {
-                selectionString = currentOutliers.join(" or ");
-                console.log("Selection String (Direct):", selectionString);
+                const resSele = currentOutliers.join(" or ");
+                selectionString = chain ? `${chainSele} and (${resSele})` : resSele;
+                console.log("Outlier selection:", selectionString);
             }
 
             if (selectionString) {
-                // NGL Scheme
-                schemeId = NGL.ColormakerRegistry.addSelectionScheme([
+                // Color scheme: outliers red, rest gray
+                const schemeId = NGL.ColormakerRegistry.addSelectionScheme([
                     ["#fb7185", selectionString],
                     ["#e2e8f0", "*"]
                 ], "outlierScheme_" + Math.random());
 
-                // Cartoon
                 component.addRepresentation("cartoon", { color: schemeId });
 
-                // Spacefill
                 component.addRepresentation("spacefill", {
                     sele: `(${selectionString}) and .CA`,
                     color: "#fb7185",
@@ -1451,7 +1479,6 @@
                     opacity: 0.6
                 });
 
-                // Labels (Will now show the Shifted/CSV number!)
                 component.addRepresentation("label", {
                     sele: `(${selectionString}) and .CA`,
                     color: "black",
