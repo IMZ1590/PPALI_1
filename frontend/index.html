@@ -276,14 +276,12 @@
                     <div id="outlier-section" class="glass p-6 rounded-2xl hidden top-6">
                         <div class="flex justify-between items-center mb-4">
                             <div class="tooltip-container">
-                                <h2 class="text-xl font-semibold text-black-600">Outlier Residues (Mahalanobis Distance)
+                                <h2 class="text-xl font-semibold text-black-600">Outlier Residues (Euclidean Distance)
                                 </h2>
                                 <span class="tooltip-icon">?</span>
                                 <div class="tooltip-text">
                                     Identifies residues that statistically deviate from the regular cluster.
-                                    <strong>Mahalanobis Distance</strong> measures distance from the data center
-                                    accounting
-                                    for correlation.
+                                    <strong>Euclidean Distance</strong> measures absolute distance from the data center.
                                     <strong>p-Value &lt; <span id="tooltip-p-val">0.05</span></strong> indicates
                                     significant outliers.
                                 </div>
@@ -315,7 +313,7 @@
                                         <th class="px-4 py-3 text-center">PC1</th>
                                         <th class="px-4 py-3 text-center">PC2</th>
                                         <th class="px-4 py-3 text-center">PC3</th>
-                                        <th class="px-4 py-3 text-center">Mahalanobis</th>
+                                        <th class="px-4 py-3 text-center">Euclidean</th>
                                         <th class="px-4 py-3 text-center">p-Value</th>
                                     </tr>
                                 </thead>
@@ -329,12 +327,12 @@
                     <!-- Distance Plot -->
                     <div id="distance-plot-section" class="glass p-6 rounded-2xl hidden">
                         <div class="tooltip-container mb-4">
-                            <h2 class="text-xl font-semibold text-slate-700">Mahalanobis Distance & Chemical Shift
-                                Perturbation</h2>
+                            <h2 class="text-xl font-semibold text-slate-700">Residue Metrics (Euclidean, CSP, PC1-3)
+                            </h2>
                             <span class="tooltip-icon">?</span>
                             <div class="tooltip-text">
-                                Displays the Mahalanobis Distance (Dm) and Chemical Shift Perturbation (CSP) per
-                                residue.
+                                Displays the Euclidean Distance (Dm), Chemical Shift Perturbation (CSP), and Principal
+                                Component (PC1, PC2, PC3) scores per residue.
                             </div>
                         </div>
                         <div id="distance-plot-container" class="h-[300px]"></div>
@@ -567,6 +565,7 @@
                 renderOutlierTable(data);
                 renderLoadings(data);
                 renderDistancePlot(data);
+
             } else {
                 document.getElementById('pca-3d-section').classList.add('hidden');
                 document.getElementById('outlier-section').classList.add('hidden');
@@ -601,7 +600,7 @@
                     "PC1 Score": s1,
                     "PC2 Score": s2,
                     "PC3 Score": s3,
-                    "Mahalanobis Dist": m,
+                    "Euclidean Dist": m,
                     "P-value": p,
                     ["Outlier (P<" + pValueThreshold + ")"]: isOutlier
                 };
@@ -655,6 +654,7 @@
                 renderOutlierTable(window.currentAnalysisData);
                 render3DPCA(window.currentAnalysisData);
                 renderDistancePlot(window.currentAnalysisData);
+
             }
         }
 
@@ -942,17 +942,17 @@
                     x: residues,
                     y: data.mahalanobis_dist,
                     type: 'bar',
-                    name: 'D<sub>M</sub>',
+                    name: 'D<sub>E</sub>',
                     marker: { color: dmColors },
                 };
 
                 const layout = {
-                    title: { text: "Mahalanobis Distance (D<sub>M</sub>)", font: { color: '#fb7185', size: 14 } },
+                    title: { text: "Euclidean Distance (D<sub>E</sub>)", font: { color: '#fb7185', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
                     xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
-                    yaxis: { title: 'D<sub>M</sub>', gridcolor: '#334155' },
+                    yaxis: { title: 'D<sub>E</sub>', gridcolor: '#334155' },
                     margin: { t: 40, b: 50, l: 50, r: 20 },
                     showlegend: false
                 };
@@ -1007,6 +1007,126 @@
                 ];
 
                 Plotly.newPlot(cspDiv, [trace], layout);
+            }
+
+            if (data.results && data.results.length >= 1) {
+                const pc1Div = document.createElement('div');
+                pc1Div.style.height = '250px';
+                pc1Div.className = 'w-full';
+                container.appendChild(pc1Div);
+
+                const scores1 = data.results[0].scores.map(Math.abs);
+                const mean1 = scores1.reduce((a, b) => a + b, 0) / scores1.length;
+                const sd1 = Math.sqrt(scores1.reduce((a, b) => a + Math.pow(b - mean1, 2), 0) / scores1.length);
+                const threshold1 = mean1 + sd1;
+
+                const colors1 = scores1.map(v => v >= threshold1 ? '#38bdf8' : '#e2e8f0');
+
+                const trace = {
+                    x: residues,
+                    y: scores1,
+                    type: 'bar',
+                    name: '|PC1|',
+                    marker: { color: colors1 }
+                };
+
+                const layout = {
+                    title: { text: "Absolute PC1 Scores (|PC1|)", font: { color: '#38bdf8', size: 14 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#94a3b8', size: 10 },
+                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
+                    yaxis: { title: 'Absolute Score', gridcolor: '#334155' },
+                    margin: { t: 40, b: 50, l: 50, r: 20 },
+                    showlegend: false,
+                    shapes: [
+                        {
+                            type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold1, y1: threshold1, yref: 'y',
+                            line: { color: '#38bdf8', width: 1, dash: 'dash' }
+                        }
+                    ]
+                };
+                Plotly.newPlot(pc1Div, [trace], layout);
+            }
+
+            if (data.results && data.results.length >= 2) {
+                const pc2Div = document.createElement('div');
+                pc2Div.style.height = '250px';
+                pc2Div.className = 'w-full';
+                container.appendChild(pc2Div);
+
+                const scores2 = data.results[1].scores.map(Math.abs);
+                const mean2 = scores2.reduce((a, b) => a + b, 0) / scores2.length;
+                const sd2 = Math.sqrt(scores2.reduce((a, b) => a + Math.pow(b - mean2, 2), 0) / scores2.length);
+                const threshold2 = mean2 + sd2;
+
+                const colors2 = scores2.map(v => v >= threshold2 ? '#818cf8' : '#e2e8f0');
+
+                const trace = {
+                    x: residues,
+                    y: scores2,
+                    type: 'bar',
+                    name: '|PC2|',
+                    marker: { color: colors2 }
+                };
+
+                const layout = {
+                    title: { text: "Absolute PC2 Scores (|PC2|)", font: { color: '#818cf8', size: 14 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#94a3b8', size: 10 },
+                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
+                    yaxis: { title: 'Absolute Score', gridcolor: '#334155' },
+                    margin: { t: 40, b: 50, l: 50, r: 20 },
+                    showlegend: false,
+                    shapes: [
+                        {
+                            type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold2, y1: threshold2, yref: 'y',
+                            line: { color: '#818cf8', width: 1, dash: 'dash' }
+                        }
+                    ]
+                };
+                Plotly.newPlot(pc2Div, [trace], layout);
+            }
+
+            if (data.results && data.results.length >= 3) {
+                const pc3Div = document.createElement('div');
+                pc3Div.style.height = '250px';
+                pc3Div.className = 'w-full';
+                container.appendChild(pc3Div);
+
+                const scores3 = data.results[2].scores.map(Math.abs);
+                const mean3 = scores3.reduce((a, b) => a + b, 0) / scores3.length;
+                const sd3 = Math.sqrt(scores3.reduce((a, b) => a + Math.pow(b - mean3, 2), 0) / scores3.length);
+                const threshold3 = mean3 + sd3;
+
+                const colors3 = scores3.map(v => v >= threshold3 ? '#a855f7' : '#e2e8f0');
+
+                const trace = {
+                    x: residues,
+                    y: scores3,
+                    type: 'bar',
+                    name: '|PC3|',
+                    marker: { color: colors3 }
+                };
+
+                const layout = {
+                    title: { text: "Absolute PC3 Scores (|PC3|)", font: { color: '#a855f7', size: 14 } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: '#94a3b8', size: 10 },
+                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
+                    yaxis: { title: 'Absolute Score', gridcolor: '#334155' },
+                    margin: { t: 40, b: 50, l: 50, r: 20 },
+                    showlegend: false,
+                    shapes: [
+                        {
+                            type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold3, y1: threshold3, yref: 'y',
+                            line: { color: '#a855f7', width: 1, dash: 'dash' }
+                        }
+                    ]
+                };
+                Plotly.newPlot(pc3Div, [trace], layout);
             }
         }
 
