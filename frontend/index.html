@@ -331,7 +331,7 @@
                             </h2>
                             <span class="tooltip-icon">?</span>
                             <div class="tooltip-text">
-                                Displays the Euclidean Distance (D<sub>E</sub>), Chemical Shift Perturbation (CSP), and Principal
+                                Displays the Euclidean Distance (Dm), Chemical Shift Perturbation (CSP), and Principal
                                 Component (PC1, PC2, PC3) scores per residue.
                             </div>
                         </div>
@@ -978,8 +978,8 @@
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
-                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
-                    yaxis: { title: 'D<sub>E</sub>', gridcolor: '#334155' },
+                    xaxis: { title: 'Residue No.', showgrid: false, type: 'category' },
+                    yaxis: { title: 'D<sub>E</sub>', showgrid: false },
                     margin: { t: 40, b: 50, l: 50, r: 20 },
                     showlegend: false
                 };
@@ -1015,23 +1015,21 @@
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
-                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
-                    yaxis: { title: 'CSP', gridcolor: '#334155' },
+                    xaxis: { title: 'Residue No.', showgrid: false, type: 'category' },
+                    yaxis: { title: 'CSP', showgrid: false },
                     margin: { t: 40, b: 50, l: 50, r: 20 },
-                    showlegend: false
+                    showlegend: false,
+                    shapes: [
+                        {
+                            type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + sd, y1: mean + sd, yref: 'y',
+                            line: { color: '#38bdf8', width: 1, dash: 'dash' }
+                        },
+                        {
+                            type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + 2 * sd, y1: mean + 2 * sd, yref: 'y',
+                            line: { color: '#a855f7', width: 1, dash: 'dash' }
+                        }
+                    ]
                 };
-
-                // Add sigma lines
-                layout.shapes = [
-                    {
-                        type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + sd, y1: mean + sd, yref: 'y',
-                        line: { color: '#38bdf8', width: 1, dash: 'dash' }
-                    },
-                    {
-                        type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + 2 * sd, y1: mean + 2 * sd, yref: 'y',
-                        line: { color: '#a855f7', width: 1, dash: 'dash' }
-                    }
-                ];
 
                 Plotly.newPlot(cspDiv, [trace], layout);
             }
@@ -1062,8 +1060,8 @@
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
-                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
-                    yaxis: { title: 'Absolute Score', gridcolor: '#334155' },
+                    xaxis: { title: 'Residue No.', showgrid: false, type: 'category' },
+                    yaxis: { title: 'Absolute Score', showgrid: false },
                     margin: { t: 40, b: 50, l: 50, r: 20 },
                     showlegend: false,
                     shapes: [
@@ -1102,8 +1100,8 @@
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
-                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
-                    yaxis: { title: 'Absolute Score', gridcolor: '#334155' },
+                    xaxis: { title: 'Residue No.', showgrid: false, type: 'category' },
+                    yaxis: { title: 'Absolute Score', showgrid: false },
                     margin: { t: 40, b: 50, l: 50, r: 20 },
                     showlegend: false,
                     shapes: [
@@ -1142,8 +1140,8 @@
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
-                    xaxis: { title: 'Residue No.', gridcolor: '#334155', type: 'category' },
-                    yaxis: { title: 'Absolute Score', gridcolor: '#334155' },
+                    xaxis: { title: 'Residue No.', showgrid: false, type: 'category' },
+                    yaxis: { title: 'Absolute Score', showgrid: false },
                     margin: { t: 40, b: 50, l: 50, r: 20 },
                     showlegend: false,
                     shapes: [
@@ -1279,8 +1277,8 @@
                 title: { text: title, font: { size: 12, color: '#e2e8f0' } },
                 paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
                 font: { color: '#94a3b8', size: 10 },
-                xaxis: { title: 'Ligand (uM)', gridcolor: '#334155' },
-                yaxis: { title: 'Score', gridcolor: '#334155' },
+                xaxis: { title: 'Ligand (uM)', showgrid: false },
+                yaxis: { title: 'Score', showgrid: false },
                 margin: { t: 30, b: 30, l: 40, r: 10 },
                 showlegend: false
             };
@@ -1386,7 +1384,7 @@
             const input = document.getElementById('pdb-code-input');
             const code = input.value.trim().toUpperCase();
             if (!code || code.length !== 4) {
-                return alert('Please enter a valid 4-letter PDB code (e.g., 7WCG)');
+                return alert('Please enter a valid 4-letter PDB code (e.g., 1UBQ)');
             }
 
             const nameEl = document.getElementById('pdb-file-name');
