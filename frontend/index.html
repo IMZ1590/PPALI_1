@@ -142,7 +142,7 @@
                 <div class="text-sm text-sky-500 font-bold bg-sky-50 px-2 py-1 rounded inline-block mb-1">Demo
                     Ver.
                 </div>
-                <div class="text-[10px] text-slate-400">Last Release: 2026.03.03</div>
+                <div class="text-[10px] text-slate-400">Last Release: 2026.03.19</div>
             </div>
 
             <h1 class="text-4xl md:text-5xl font-bold mb-2 md:mb-4">
@@ -371,7 +371,8 @@
                                 <div
                                     class="flex flex-col items-center justify-center pt-3 pb-4 text-center pointer-events-none">
                                     <span class="text-2xl mb-1">🧬</span>
-                                    <p class="mb-1 text-sm text-slate-500"><span class="font-semibold">Upload PDB</span></p>
+                                    <p class="mb-1 text-sm text-slate-500"><span class="font-semibold">Upload PDB</span>
+                                    </p>
                                     <p class="text-xs text-slate-400">Drag & Drop or Click</p>
                                 </div>
                                 <input id="pdb-file-input" type="file" class="hidden" accept=".pdb,.cif,.ent"
@@ -409,7 +410,8 @@
                                         onchange="reapplyColoring()">
                                 </div>
                                 <div class="flex items-center space-x-1">
-                                    <label class="text-xs text-slate-600 font-semibold whitespace-nowrap">1st Res</label>
+                                    <label class="text-xs text-slate-600 font-semibold whitespace-nowrap">1st
+                                        Res</label>
                                     <input id="pdb-first-res" type="number" value="" placeholder="auto"
                                         class="w-16 bg-white border border-slate-300 rounded-lg px-2 py-1.5 text-sm text-center outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                                         onchange="reapplyColoring()">
@@ -1372,7 +1374,7 @@
                     if (currentOutliers.length > 0) {
                         applyOutlierColoring(component);
                     } else {
-                        component.addRepresentation("cartoon", { color: "lightgray" });
+                        component.addRepresentation("cartoon", { color: "lightgray", sele: "/0" });
                     }
                     component.autoView();
                 });
@@ -1426,7 +1428,7 @@
                 if (currentOutliers.length > 0) {
                     applyOutlierColoring(component);
                 } else {
-                    component.addRepresentation("cartoon", { color: "lightgray" });
+                    component.addRepresentation("cartoon", { color: "lightgray", sele: "/0" });
                 }
                 component.autoView();
             });
@@ -1468,17 +1470,17 @@
                     ["#e2e8f0", "*"]
                 ], "outlierScheme_" + Math.random());
 
-                component.addRepresentation("cartoon", { color: schemeId });
+                component.addRepresentation("cartoon", { color: schemeId, sele: "/0" });
 
                 component.addRepresentation("spacefill", {
-                    sele: `(${selectionString}) and .CA`,
+                    sele: `(${selectionString}) and .CA and /0`,
                     color: "#fb7185",
                     radius: 1.5,
                     opacity: 0.6
                 });
 
                 component.addRepresentation("label", {
-                    sele: `(${selectionString}) and .CA`,
+                    sele: `(${selectionString}) and .CA and /0`,
                     color: "black",
                     scale: 2.0,
                     labelType: "format",
@@ -1491,7 +1493,7 @@
                 });
 
             } else {
-                component.addRepresentation("cartoon", { color: "lightgray" });
+                component.addRepresentation("cartoon", { color: "lightgray", sele: "/0" });
             }
 
             component.autoView();
