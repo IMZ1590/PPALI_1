@@ -276,14 +276,13 @@
                     <div id="outlier-section" class="glass p-6 rounded-2xl hidden top-6">
                         <div class="flex justify-between items-center mb-4">
                             <div class="tooltip-container">
-                                <h2 class="text-xl font-semibold text-black-600">Outlier Residues (Euclidean Distance)
+                                <h2 class="text-xl font-semibold text-black-600">Outlier Residues (PC-based)
                                 </h2>
                                 <span class="tooltip-icon">?</span>
                                 <div class="tooltip-text">
-                                    Identifies residues that statistically deviate from the regular cluster.
-                                    <strong>Euclidean Distance</strong> measures absolute distance from the data center.
+                                    Identifies residues that statistically deviate from the regular cluster in each Principal Component.
                                     <strong>p-Value &lt; <span id="tooltip-p-val">0.05</span></strong> indicates
-                                    significant outliers.
+                                    significant outliers. Prioritizes PC1 > PC2 > PC3 for coloring.
                                 </div>
                             </div>
                         </div>
@@ -313,7 +312,7 @@
                                         <th class="px-4 py-3 text-center">PC1</th>
                                         <th class="px-4 py-3 text-center">PC2</th>
                                         <th class="px-4 py-3 text-center">PC3</th>
-                                        <th class="px-4 py-3 text-center">Euclidean</th>
+                                        <th class="px-4 py-3 text-center">Source PC</th>
                                         <th class="px-4 py-3 text-center">p-Value</th>
                                     </tr>
                                 </thead>
@@ -327,11 +326,11 @@
                     <!-- Distance Plot -->
                     <div id="distance-plot-section" class="glass p-6 rounded-2xl hidden">
                         <div class="tooltip-container mb-4">
-                            <h2 class="text-xl font-semibold text-slate-700">Residue Metrics (Euclidean, CSP, PC1-3)
+                            <h2 class="text-xl font-semibold text-slate-700">Residue Metrics (CSP, PC1-3)
                             </h2>
                             <span class="tooltip-icon">?</span>
                             <div class="tooltip-text">
-                                Displays the Euclidean Distance (Dm), Chemical Shift Perturbation (CSP), and Principal
+                                Displays the Chemical Shift Perturbation (CSP) and Principal
                                 Component (PC1, PC2, PC3) scores per residue.
                             </div>
                         </div>
@@ -397,7 +396,11 @@
                             <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
                                 <p class="font-semibold mb-1">Color Legend:</p>
                                 <div class="flex items-center mb-1"><span
-                                        class="w-3 h-3 bg-rose-500 rounded-full mr-2"></span> Outliers (Red)</div>
+                                        class="w-3 h-3 bg-rose-400 rounded-full mr-2"></span> PC1 Outliers (Red)</div>
+                                <div class="flex items-center mb-1"><span
+                                        class="w-3 h-3 bg-sky-400 rounded-full mr-2"></span> PC2 Outliers (Sky Blue)</div>
+                                <div class="flex items-center mb-1"><span
+                                        class="w-3 h-3 bg-purple-500 rounded-full mr-2"></span> PC3 Outliers (Purple)</div>
                                 <div class="flex items-center"><span
                                         class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span>
                                     Others (Gray)</div>
@@ -619,19 +622,31 @@
                 const s1 = data.results[0].scores[idx];
                 const s2 = data.results[1]?.scores[idx] || 0;
                 const s3 = data.results[2]?.scores[idx] || 0;
-                const m = data.mahalanobis_dist ? data.mahalanobis_dist[idx] : null;
-                const p = data.p_values ? data.p_values[idx] : null;
+
+                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
+                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
+                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
+                
                 const pValueThreshold = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
-                const isOutlier = p !== null && p < pValueThreshold ? "Yes" : "No";
+
+                let sourcePC = "-";
+                let minPval = "-";
+                if (p1 < pValueThreshold) { sourcePC = "PC1"; minPval = p1; }
+                else if (p2 < pValueThreshold) { sourcePC = "PC2"; minPval = p2; }
+                else if (p3 < pValueThreshold) { sourcePC = "PC3"; minPval = p3; }
+                
+                const isOutlier = sourcePC !== "-" ? "Yes" : "No";
 
                 let row = {
                     "Residue No": resNo,
                     "PC1 Score": s1,
                     "PC2 Score": s2,
                     "PC3 Score": s3,
-                    "Euclidean Dist": m,
-                    "P-value": p,
-                    ["Outlier (P<" + pValueThreshold + ")"]: isOutlier
+                    "PC1 P-value": p1,
+                    "PC2 P-value": p2,
+                    "PC3 P-value": p3,
+                    ["Outlier (P<" + pValueThreshold + ")"]: isOutlier,
+                    "Source PC": sourcePC
                 };
 
                 if (data.csp) {
@@ -687,12 +702,16 @@
             }
         }
 
+        // Global variable for different PC outliers
+        let pc1Outliers = [];
+        let pc2Outliers = [];
+        let pc3Outliers = [];
+
         function renderOutlierTable(data) {
             const body = document.getElementById('outlier-table-body');
             body.innerHTML = '';
 
             // Thresholds
-            const EUCLIDEAN_THRESHOLD = 3.0;
             const P_VALUE_THRESHOLD = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
 
             // Update tooltip text to reflect current threshold
@@ -700,61 +719,54 @@
             if (tooltipSpan) tooltipSpan.textContent = P_VALUE_THRESHOLD;
 
             // Reset Global Outliers
-            currentOutliers = [];
-
-            const hasStats = data.mahalanobis_dist && data.p_values;
+            pc1Outliers = [];
+            pc2Outliers = [];
+            pc3Outliers = [];
 
             data.residue_nos.forEach((resNo, idx) => {
                 const s1 = data.results[0].scores[idx];
                 const s2 = data.results[1]?.scores[idx] || 0;
                 const s3 = data.results[2]?.scores[idx] || 0;
-                const dist = Math.sqrt(s1 * s1 + s2 * s2 + s3 * s3);
+                
+                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
+                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
+                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
 
                 let isOutlier = false;
-                let reason = [];
+                let sourcePC = "-";
+                let minPval = "-";
+                let badgeClass = "";
+                let textColor = "text-slate-500";
 
-                // 1. Check P-value (Primary)
-                let pValStr = "-";
-                let mahaStr = "-";
-
-                if (hasStats) {
-                    const p = data.p_values[idx];
-                    const m = data.mahalanobis_dist[idx];
-                    pValStr = p.toExponential(2);
-                    mahaStr = m.toFixed(2);
-
-                    if (p < P_VALUE_THRESHOLD) {
-                        isOutlier = true;
-                        reason.push(`P < ${P_VALUE_THRESHOLD}`);
-                    }
+                if (p1 < P_VALUE_THRESHOLD) {
+                    isOutlier = true; sourcePC = "PC1"; minPval = p1;
+                    badgeClass = "bg-rose-100 text-rose-700";
+                    textColor = "text-rose-600 font-bold";
+                    pc1Outliers.push(parseInt(resNo));
+                } else if (p2 < P_VALUE_THRESHOLD) {
+                    isOutlier = true; sourcePC = "PC2"; minPval = p2;
+                    badgeClass = "bg-sky-100 text-sky-700";
+                    textColor = "text-sky-600 font-bold";
+                    pc2Outliers.push(parseInt(resNo));
+                } else if (p3 < P_VALUE_THRESHOLD) {
+                    isOutlier = true; sourcePC = "PC3"; minPval = p3;
+                    badgeClass = "bg-purple-100 text-purple-700";
+                    textColor = "text-purple-600 font-bold";
+                    pc3Outliers.push(parseInt(resNo));
                 }
 
-                // 2. Fallback / Complementary: Euclidean Distance
-                // If we don't have stats, OR if we want to combine criteria?
-                // The user asked to "Replace" the fixed Euclidean distance cutoff with P-value.
-                // However, holding on to strong geometric outliers might be safe.
-                // Let's make it an OR condition for robustness, or prioritize P-value.
-                // If stats are available, use P-value. If not, Dist.
-                // Fallback removed
-                // if (!hasStats && dist > EUCLIDEAN_THRESHOLD) ...
-
-                // Also Keep Component-wise check for visual "Reason" explanation if it helps?
-                // Actually, let's just stick to the main stat criteria to keep it clean.
-
                 if (isOutlier) {
-                    currentOutliers.push(parseInt(resNo));
-
                     const tr = document.createElement('tr');
                     tr.className = 'border-b border-slate-200/50 hover:bg-slate-50/30 transition-colors';
 
                     tr.innerHTML = `
                         <td class="px-4 py-3 font-semibold text-sky-600">Res ${resNo}</td>
-                        <td class="px-4 py-3 text-center ${Math.abs(s1) > 1.5 ? 'text-rose-600' : ''}">${s1.toFixed(2)}</td>
-                        <td class="px-4 py-3 text-center ${Math.abs(s2) > 1.5 ? 'text-rose-600' : ''}">${s2.toFixed(2)}</td>
-                        <td class="px-4 py-3 text-center ${Math.abs(s3) > 1.5 ? 'text-rose-600' : ''}">${s3.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center ${p1 < P_VALUE_THRESHOLD ? 'text-rose-600 font-bold' : ''}">${s1.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center ${p2 < P_VALUE_THRESHOLD ? 'text-sky-600 font-bold' : ''}">${s2.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center ${p3 < P_VALUE_THRESHOLD ? 'text-purple-600 font-bold' : ''}">${s3.toFixed(2)}</td>
 
-                        <td class="px-4 py-3 text-center font-mono text-xs text-indigo-600">${mahaStr}</td>
-                        <td class="px-4 py-3 text-center font-mono text-xs ${hasStats && data.p_values[idx] < P_VALUE_THRESHOLD ? 'text-red-600 font-bold' : 'text-slate-500'}">${pValStr}</td>
+                        <td class="px-4 py-3 text-center font-mono text-xs"><span class="px-2 py-0.5 rounded ${badgeClass} font-semibold">${sourcePC}</span></td>
+                        <td class="px-4 py-3 text-center font-mono text-xs ${textColor}">${minPval.toExponential(2)}</td>
                     `;
                     body.appendChild(tr);
                 }
@@ -877,22 +889,28 @@
 
             // Use P-value threshold instead of Euclidean distance
             const P_VALUE_THRESHOLD = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
-            const hasStats = data.p_values && data.p_values.length === data.residue_nos.length;
             const is3D = data.results.length >= 3;
 
             const textLabels = data.residue_nos.map((r, idx) => {
-                let isOutlier = false;
-                if (hasStats) {
-                    if (data.p_values[idx] < P_VALUE_THRESHOLD) isOutlier = true;
-                } else {
-                    // Fallback to legacy distance if stats missing (shouldn't happen)
-                    const s1 = data.results[0].scores[idx];
-                    const s2 = data.results[1]?.scores[idx] || 0;
-                    const s3 = is3D ? data.results[2].scores[idx] : 0;
-                    const dist = Math.sqrt(s1 * s1 + s2 * s2 + s3 * s3);
-                    if (dist > 3.0) isOutlier = true;
+                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
+                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
+                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
+                
+                if (p1 < P_VALUE_THRESHOLD || p2 < P_VALUE_THRESHOLD || p3 < P_VALUE_THRESHOLD) {
+                    return `Res ${r}`;
                 }
-                return isOutlier ? `Res ${r}` : '';
+                return '';
+            });
+            
+            const markerColors = data.residue_nos.map((r, idx) => {
+                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
+                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
+                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
+                
+                if (p1 < P_VALUE_THRESHOLD) return '#fb7185';
+                if (p2 < P_VALUE_THRESHOLD) return '#38bdf8';
+                if (p3 < P_VALUE_THRESHOLD) return '#a855f7';
+                return '#e2e8f0'; // Gray
             });
 
             const trace = {
@@ -904,7 +922,7 @@
                 textposition: 'top center',
                 marker: {
                     size: is3D ? 4 : 8,
-                    color: textLabels.map(l => l ? '#fb7185' : '#38bdf8'), // Red for outliers, Blue for normal
+                    color: markerColors,
                     opacity: 0.8
                 }
             };
@@ -954,39 +972,6 @@
             container.style.height = 'auto'; // ensure parent doesn't constrain it to 300px
 
             const residues = data.residue_nos;
-
-            if (data.mahalanobis_dist) {
-                const dmDiv = document.createElement('div');
-                dmDiv.style.height = '250px';
-                dmDiv.className = 'w-full';
-                container.appendChild(dmDiv);
-
-                const pValueThreshold = parseFloat(document.getElementById('pvalue-threshold')?.value || "0.05");
-                const dmColors = data.mahalanobis_dist.map((dm, idx) => {
-                    const p = data.p_values ? data.p_values[idx] : 1;
-                    return p < pValueThreshold ? '#fb7185' : '#e2e8f0'; // Red for outliers, grey for normal
-                });
-
-                const trace = {
-                    x: residues,
-                    y: data.mahalanobis_dist,
-                    type: 'bar',
-                    name: 'D<sub>E</sub>',
-                    marker: { color: dmColors },
-                };
-
-                const layout = {
-                    title: { text: "Euclidean Distance (D<sub>E</sub>)", font: { color: '#fb7185', size: 14 } },
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                    font: { color: '#94a3b8', size: 10 },
-                    xaxis: { title: 'Residue No.', showgrid: false, type: 'category' },
-                    yaxis: { title: 'D<sub>E</sub>', showgrid: false },
-                    margin: { t: 40, b: 50, l: 50, r: 20 },
-                    showlegend: false
-                };
-                Plotly.newPlot(dmDiv, [trace], layout);
-            }
 
             if (data.csp) {
                 const cspDiv = document.createElement('div');
@@ -1047,7 +1032,7 @@
                 const sd1 = Math.sqrt(scores1.reduce((a, b) => a + Math.pow(b - mean1, 2), 0) / scores1.length);
                 const threshold1 = mean1 + 2 * sd1;
 
-                const colors1 = scores1.map(v => v >= threshold1 ? '#38bdf8' : '#e2e8f0');
+                const colors1 = scores1.map(v => v >= threshold1 ? '#fb7185' : '#e2e8f0');
 
                 const trace = {
                     x: residues,
@@ -1058,7 +1043,7 @@
                 };
 
                 const layout = {
-                    title: { text: "Absolute PC1 Scores (|PC1|)", font: { color: '#38bdf8', size: 14 } },
+                    title: { text: "Absolute PC1 Scores (|PC1|)", font: { color: '#fb7185', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
@@ -1069,7 +1054,7 @@
                     shapes: [
                         {
                             type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold1, y1: threshold1, yref: 'y',
-                            line: { color: '#38bdf8', width: 1, dash: 'dash' }
+                            line: { color: '#fb7185', width: 1, dash: 'dash' }
                         }
                     ]
                 };
@@ -1087,7 +1072,7 @@
                 const sd2 = Math.sqrt(scores2.reduce((a, b) => a + Math.pow(b - mean2, 2), 0) / scores2.length);
                 const threshold2 = mean2 + 2 * sd2;
 
-                const colors2 = scores2.map(v => v >= threshold2 ? '#818cf8' : '#e2e8f0');
+                const colors2 = scores2.map(v => v >= threshold2 ? '#38bdf8' : '#e2e8f0');
 
                 const trace = {
                     x: residues,
@@ -1098,7 +1083,7 @@
                 };
 
                 const layout = {
-                    title: { text: "Absolute PC2 Scores (|PC2|)", font: { color: '#818cf8', size: 14 } },
+                    title: { text: "Absolute PC2 Scores (|PC2|)", font: { color: '#38bdf8', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
@@ -1109,7 +1094,7 @@
                     shapes: [
                         {
                             type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold2, y1: threshold2, yref: 'y',
-                            line: { color: '#818cf8', width: 1, dash: 'dash' }
+                            line: { color: '#38bdf8', width: 1, dash: 'dash' }
                         }
                     ]
                 };
@@ -1371,7 +1356,7 @@
                 stage.removeAllComponents();
 
                 stage.loadFile(blob, { ext: ext }).then(function (component) {
-                    if (currentOutliers.length > 0) {
+                    if (pc1Outliers.length > 0 || pc2Outliers.length > 0 || pc3Outliers.length > 0) {
                         applyOutlierColoring(component);
                     } else {
                         component.addRepresentation("cartoon", { color: "lightgray", sele: "/0" });
@@ -1425,7 +1410,7 @@
             stage.removeAllComponents();
 
             stage.loadFile(blob, { ext: ext }).then(function (component) {
-                if (currentOutliers.length > 0) {
+                if (pc1Outliers.length > 0 || pc2Outliers.length > 0 || pc3Outliers.length > 0) {
                     applyOutlierColoring(component);
                 } else {
                     component.addRepresentation("cartoon", { color: "lightgray", sele: "/0" });
@@ -1455,32 +1440,45 @@
             const chain = chainInput ? chainInput.value.trim().toUpperCase() : '';
             const chainSele = chain ? `:${chain}` : '';
 
-            // Use CSV residue numbers directly for PDB selection
-            let selectionString = "";
-            if (currentOutliers && currentOutliers.length > 0) {
-                const resSele = currentOutliers.join(" or ");
-                selectionString = chain ? `${chainSele} and (${resSele})` : resSele;
-                console.log("Outlier selection:", selectionString);
+            // Build selection strings and coloring rules based on priority
+            let schemeRules = [];
+            let combinedOutliers = [];
+            
+            // Priority: PC1 > PC2 > PC3
+            if (pc1Outliers.length > 0) {
+                const sel = chain ? `${chainSele} and (${pc1Outliers.join(" or ")})` : pc1Outliers.join(" or ");
+                schemeRules.push(["#fb7185", sel]); // Red
+                combinedOutliers.push(...pc1Outliers);
             }
+            if (pc2Outliers.length > 0) {
+                const sel = chain ? `${chainSele} and (${pc2Outliers.join(" or ")})` : pc2Outliers.join(" or ");
+                schemeRules.push(["#38bdf8", sel]); // Sky Blue
+                combinedOutliers.push(...pc2Outliers);
+            }
+            if (pc3Outliers.length > 0) {
+                const sel = chain ? `${chainSele} and (${pc3Outliers.join(" or ")})` : pc3Outliers.join(" or ");
+                schemeRules.push(["#a855f7", sel]); // Purple
+                combinedOutliers.push(...pc3Outliers);
+            }
+            
+            schemeRules.push(["#e2e8f0", "*"]); // Gray default
 
-            if (selectionString) {
-                // Color scheme: outliers red, rest gray
-                const schemeId = NGL.ColormakerRegistry.addSelectionScheme([
-                    ["#fb7185", selectionString],
-                    ["#e2e8f0", "*"]
-                ], "outlierScheme_" + Math.random());
-
+            if (combinedOutliers.length > 0) {
+                const schemeId = NGL.ColormakerRegistry.addSelectionScheme(schemeRules, "outlierScheme_" + Math.random());
                 component.addRepresentation("cartoon", { color: schemeId, sele: "/0" });
 
+                // Add Spacefill / labels for all outliers combined
+                const allOutlierSele = chain ? `${chainSele} and (${combinedOutliers.join(" or ")})` : combinedOutliers.join(" or ");
+                
                 component.addRepresentation("spacefill", {
-                    sele: `(${selectionString}) and .CA and /0`,
-                    color: "#fb7185",
+                    sele: `(${allOutlierSele}) and .CA and /0`,
+                    color: schemeId,
                     radius: 1.5,
-                    opacity: 0.6
+                    opacity: 0.8
                 });
 
                 component.addRepresentation("label", {
-                    sele: `(${selectionString}) and .CA and /0`,
+                    sele: `(${allOutlierSele}) and .CA and /0`,
                     color: "black",
                     scale: 2.0,
                     labelType: "format",

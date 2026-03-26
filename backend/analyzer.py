@@ -40,41 +40,31 @@ def run_residue_pca(residue_data, feature_names=None, calculate_csp=False, h_idx
     loadings = pca.components_ 
     variance_ratio = pca.explained_variance_ratio_.tolist()
     
-    # Calculate Euclidean Distance and P-values
-    # Euclidean Distance D_E = sqrt( sum( score_i^2 ) )
-    from scipy.stats import chi2
-    
-    euclidean_sq = np.sum(scores**2, axis=1)
-    euclidean_dist = np.sqrt(euclidean_sq)
-    
-    # Heuristic P-value mapping (using Chi-squared approximation on scaled scores for rough p-value equivalent if desired)
-    # The user relies on P-values, so we still calculate a sort of significance.
-    # If the user wants true Euclidean, technically we should use a different distribution. For now we will keep the Chi-square approximation for outlier detection but applied on euclidean_sq. This may not be strictly rigorous but preserves the UI functionality.
-    # Actually, let's normalize euclidean_sq by its mean? Or just use chi2.
-    # Let's use the standard chi2 approach but replacing mahalanobis_dist with euclidean_dist in the output dictionary so we don't break frontend.
-    
-    p_values = chi2.sf(euclidean_sq, df=n_components)
+    # Removed Euclidean distance and Chi2 p-values. Outliers handled in frontend per-PC.
     
     results = []
-    # Store per-residue statistics separately or attach to results?
-    # The current 'results' structure is per-PC. We need per-residue stats.
-    # Let's attach them to the return object as parallel arrays.
+    
+    from scipy.stats import chi2
     
     for i in range(n_components):
+        variance_i = pca.explained_variance_[i]
+        scores_i = scores[:, i]
+        z_scores_sq = (scores_i ** 2) / variance_i if variance_i > 0 else np.zeros_like(scores_i)
+        pc_p_values = chi2.sf(z_scores_sq, df=1).tolist()
+        
         results.append({
             "pc_index": i + 1,
-            "scores": scores[:, i].tolist(),
+            "scores": scores_i.tolist(),
+            "p_values": pc_p_values,
             "loadings": {name: float(val) for name, val in zip(feature_names, loadings[i])},
-            "success": False 
+            "success": True
         })
         
     ret = {
         "results": results,
         "variance_ratio": variance_ratio,
         "residue_nos": residue_nos.tolist(),
-        "feature_names": feature_names,
-        "mahalanobis_dist": euclidean_dist.tolist(), # Sent as mahalanobis_dist key to avoid breaking JS, but contains Euclidean
-        "p_values": p_values.tolist()
+        "feature_names": feature_names
     }
     
     if csp_values is not None:
