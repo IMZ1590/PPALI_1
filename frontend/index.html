@@ -973,6 +973,10 @@
 
             const residues = data.residue_nos;
 
+            const pValToSigma = { "0.1": 1.64, "0.05": 1.96, "0.01": 2.58, "0.005": 2.81 };
+            const pValueStr = document.getElementById('pvalue-threshold')?.value || "0.05";
+            const sigmaMultiplier = pValToSigma[pValueStr] || 2;
+
             if (data.csp) {
                 const cspDiv = document.createElement('div');
                 cspDiv.style.height = '250px';
@@ -1030,7 +1034,7 @@
                 const scores1 = data.results[0].scores.map(Math.abs);
                 const mean1 = scores1.reduce((a, b) => a + b, 0) / scores1.length;
                 const sd1 = Math.sqrt(scores1.reduce((a, b) => a + Math.pow(b - mean1, 2), 0) / scores1.length);
-                const threshold1 = mean1 + 2 * sd1;
+                const threshold1 = mean1 + sigmaMultiplier * sd1;
 
                 const colors1 = scores1.map(v => v >= threshold1 ? '#fb7185' : '#e2e8f0');
 
@@ -1070,7 +1074,7 @@
                 const scores2 = data.results[1].scores.map(Math.abs);
                 const mean2 = scores2.reduce((a, b) => a + b, 0) / scores2.length;
                 const sd2 = Math.sqrt(scores2.reduce((a, b) => a + Math.pow(b - mean2, 2), 0) / scores2.length);
-                const threshold2 = mean2 + 2 * sd2;
+                const threshold2 = mean2 + sigmaMultiplier * sd2;
 
                 const colors2 = scores2.map(v => v >= threshold2 ? '#38bdf8' : '#e2e8f0');
 
@@ -1110,7 +1114,7 @@
                 const scores3 = data.results[2].scores.map(Math.abs);
                 const mean3 = scores3.reduce((a, b) => a + b, 0) / scores3.length;
                 const sd3 = Math.sqrt(scores3.reduce((a, b) => a + Math.pow(b - mean3, 2), 0) / scores3.length);
-                const threshold3 = mean3 + 2 * sd3;
+                const threshold3 = mean3 + sigmaMultiplier * sd3;
 
                 const colors3 = scores3.map(v => v >= threshold3 ? '#a855f7' : '#e2e8f0');
 
