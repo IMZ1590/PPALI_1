@@ -12,7 +12,7 @@ def run_residue_pca(residue_data, feature_names=None, calculate_csp=False, h_idx
         return {"error": "Insufficient data for PCA. Need at least 2 columns (ID + Feature)"}
 
     residue_nos = data[:, 0]
-    features = np.abs(data[:, 1:].astype(float)) # All but first column
+    features = data[:, 1:].astype(float) # All but first column
     n_features = features.shape[1]
     
     # Defaults for header names if not provided
