@@ -142,7 +142,7 @@
                 <div class="text-sm text-sky-500 font-bold bg-sky-50 px-2 py-1 rounded inline-block mb-1">Demo
                     Ver.
                 </div>
-                <div class="text-[10px] text-slate-400">Last Release: 2026.03.19</div>
+                <div class="text-[10px] text-slate-400">Last Release: 2026.04.02</div>
             </div>
 
             <h1 class="text-4xl md:text-5xl font-bold mb-2 md:mb-4">
@@ -274,13 +274,31 @@
                     <!-- Outlier Residues Table -->
 
                     <div id="outlier-section" class="glass p-6 rounded-2xl hidden top-6">
+                        <!-- Feature Statistics Sub-section -->
+                        <div id="stats-section" class="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 hidden">
+                            <h3 class="text-md font-semibold text-slate-700 mb-2">Feature Statistics</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-center text-slate-600">
+                                    <thead class="text-xs bg-slate-100/80 border-b border-slate-200">
+                                        <tr id="stats-header"></tr>
+                                    </thead>
+                                    <tbody id="stats-body"></tbody>
+                                </table>
+                            </div>
+                            <div id="alpha-pali-container" class="mt-3 text-sm font-semibold text-indigo-700 hidden">
+                                &alpha;<sub>PALI</sub> (<span class="italic text-xs text-indigo-500">σ<sub>H</sub> /
+                                    σ<sub>N</sub></span>) : <span id="alpha-pali-value"></span>
+                            </div>
+                        </div>
+
                         <div class="flex justify-between items-center mb-4">
                             <div class="tooltip-container">
                                 <h2 class="text-xl font-semibold text-black-600">Outlier Residues (PC-based)
                                 </h2>
                                 <span class="tooltip-icon">?</span>
                                 <div class="tooltip-text">
-                                    Identifies residues that statistically deviate from the regular cluster in each Principal Component.
+                                    Identifies residues that statistically deviate from the regular cluster in each
+                                    Principal Component.
                                     <strong>p-Value &lt; <span id="tooltip-p-val">0.05</span></strong> indicates
                                     significant outliers. Prioritizes PC1 > PC2 > PC3 for coloring.
                                 </div>
@@ -398,9 +416,11 @@
                                 <div class="flex items-center mb-1"><span
                                         class="w-3 h-3 bg-rose-400 rounded-full mr-2"></span> PC1 Outliers (Red)</div>
                                 <div class="flex items-center mb-1"><span
-                                        class="w-3 h-3 bg-sky-400 rounded-full mr-2"></span> PC2 Outliers (Sky Blue)</div>
+                                        class="w-3 h-3 bg-sky-400 rounded-full mr-2"></span> PC2 Outliers (Sky Blue)
+                                </div>
                                 <div class="flex items-center mb-1"><span
-                                        class="w-3 h-3 bg-purple-500 rounded-full mr-2"></span> PC3 Outliers (Purple)</div>
+                                        class="w-3 h-3 bg-purple-500 rounded-full mr-2"></span> PC3 Outliers (Purple)
+                                </div>
                                 <div class="flex items-center"><span
                                         class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span>
                                     Others (Gray)</div>
@@ -595,6 +615,7 @@
                 if (stage) stage.handleResize();
                 render3DPCA(data);
                 renderOutlierTable(data);
+                renderStats(data);
                 renderLoadings(data);
                 renderDistancePlot(data);
 
@@ -626,7 +647,7 @@
                 const p1 = data.results[0]?.p_values?.[idx] ?? 1;
                 const p2 = data.results[1]?.p_values?.[idx] ?? 1;
                 const p3 = data.results[2]?.p_values?.[idx] ?? 1;
-                
+
                 const pValueThreshold = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
 
                 let sourcePC = "-";
@@ -634,7 +655,7 @@
                 if (p1 < pValueThreshold) { sourcePC = "PC1"; minPval = p1; }
                 else if (p2 < pValueThreshold) { sourcePC = "PC2"; minPval = p2; }
                 else if (p3 < pValueThreshold) { sourcePC = "PC3"; minPval = p3; }
-                
+
                 const isOutlier = sourcePC !== "-" ? "Yes" : "No";
 
                 let row = {
@@ -707,6 +728,50 @@
         let pc2Outliers = [];
         let pc3Outliers = [];
 
+        function renderStats(data) {
+            const statsSection = document.getElementById('stats-section');
+            if (!statsSection) return;
+
+            if (data.feature_means && data.feature_stds && data.feature_names) {
+                statsSection.classList.remove('hidden');
+
+                const thead = document.getElementById('stats-header');
+                const tbody = document.getElementById('stats-body');
+
+                // Build headers
+                let ths = '<th class="px-3 py-2 text-left w-32">Metric</th>';
+                data.feature_names.forEach(name => {
+                    ths += `<th class="px-3 py-2">${name}</th>`;
+                });
+                thead.innerHTML = ths;
+
+                // Build means
+                let meanRow = `<td class="px-3 py-2 font-semibold text-left">Avg.</td>`;
+                data.feature_names.forEach(name => {
+                    meanRow += `<td class="px-3 py-2">${data.feature_means[name].toFixed(4)}</td>`;
+                });
+
+                // Build stds
+                let stdRow = `<td class="px-3 py-2 font-semibold text-left">Std. Dev.</td>`;
+                data.feature_names.forEach(name => {
+                    stdRow += `<td class="px-3 py-2">${data.feature_stds[name].toFixed(4)}</td>`;
+                });
+
+                tbody.innerHTML = `<tr class="border-b border-slate-200/50">${meanRow}</tr><tr>${stdRow}</tr>`;
+
+                // Handle Alpha_PALI
+                const alphaContainer = document.getElementById('alpha-pali-container');
+                if (data.alpha_pali !== undefined) {
+                    document.getElementById('alpha-pali-value').textContent = data.alpha_pali.toFixed(4);
+                    alphaContainer.classList.remove('hidden');
+                } else {
+                    alphaContainer.classList.add('hidden');
+                }
+            } else {
+                statsSection.classList.add('hidden');
+            }
+        }
+
         function renderOutlierTable(data) {
             const body = document.getElementById('outlier-table-body');
             body.innerHTML = '';
@@ -727,7 +792,7 @@
                 const s1 = data.results[0].scores[idx];
                 const s2 = data.results[1]?.scores[idx] || 0;
                 const s3 = data.results[2]?.scores[idx] || 0;
-                
+
                 const p1 = data.results[0]?.p_values?.[idx] ?? 1;
                 const p2 = data.results[1]?.p_values?.[idx] ?? 1;
                 const p3 = data.results[2]?.p_values?.[idx] ?? 1;
@@ -895,18 +960,18 @@
                 const p1 = data.results[0]?.p_values?.[idx] ?? 1;
                 const p2 = data.results[1]?.p_values?.[idx] ?? 1;
                 const p3 = data.results[2]?.p_values?.[idx] ?? 1;
-                
+
                 if (p1 < P_VALUE_THRESHOLD || p2 < P_VALUE_THRESHOLD || p3 < P_VALUE_THRESHOLD) {
                     return `Res ${r}`;
                 }
                 return '';
             });
-            
+
             const markerColors = data.residue_nos.map((r, idx) => {
                 const p1 = data.results[0]?.p_values?.[idx] ?? 1;
                 const p2 = data.results[1]?.p_values?.[idx] ?? 1;
                 const p3 = data.results[2]?.p_values?.[idx] ?? 1;
-                
+
                 if (p1 < P_VALUE_THRESHOLD) return '#fb7185';
                 if (p2 < P_VALUE_THRESHOLD) return '#38bdf8';
                 if (p3 < P_VALUE_THRESHOLD) return '#a855f7';
@@ -1447,24 +1512,24 @@
             // Build selection strings and coloring rules based on priority
             let schemeRules = [];
             let combinedOutliers = [];
-            
+
             // Priority: PC1 > PC2 > PC3
             if (pc1Outliers.length > 0) {
-                const sel = chain ? `${chainSele} and (${pc1Outliers.join(" or ")})` : pc1Outliers.join(" or ");
+                const sel = chain ? `${chainSele} and (${pc1Outliers.join(", ")})` : pc1Outliers.join(", ");
                 schemeRules.push(["#fb7185", sel]); // Red
                 combinedOutliers.push(...pc1Outliers);
             }
             if (pc2Outliers.length > 0) {
-                const sel = chain ? `${chainSele} and (${pc2Outliers.join(" or ")})` : pc2Outliers.join(" or ");
+                const sel = chain ? `${chainSele} and (${pc2Outliers.join(", ")})` : pc2Outliers.join(", ");
                 schemeRules.push(["#38bdf8", sel]); // Sky Blue
                 combinedOutliers.push(...pc2Outliers);
             }
             if (pc3Outliers.length > 0) {
-                const sel = chain ? `${chainSele} and (${pc3Outliers.join(" or ")})` : pc3Outliers.join(" or ");
+                const sel = chain ? `${chainSele} and (${pc3Outliers.join(", ")})` : pc3Outliers.join(", ");
                 schemeRules.push(["#a855f7", sel]); // Purple
                 combinedOutliers.push(...pc3Outliers);
             }
-            
+
             schemeRules.push(["#e2e8f0", "*"]); // Gray default
 
             if (combinedOutliers.length > 0) {
@@ -1472,8 +1537,8 @@
                 component.addRepresentation("cartoon", { color: schemeId, sele: "/0" });
 
                 // Add Spacefill / labels for all outliers combined
-                const allOutlierSele = chain ? `${chainSele} and (${combinedOutliers.join(" or ")})` : combinedOutliers.join(" or ");
-                
+                const allOutlierSele = chain ? `${chainSele} and (${combinedOutliers.join(", ")})` : combinedOutliers.join(", ");
+
                 component.addRepresentation("spacefill", {
                     sele: `(${allOutlierSele}) and .CA and /0`,
                     color: schemeId,

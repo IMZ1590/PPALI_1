@@ -21,14 +21,17 @@ def run_residue_pca(residue_data, feature_names=None, calculate_csp=False, h_idx
         
     csp_values = None
     if calculate_csp and n_features >= 2 and h_idx is not None and n_idx is not None:
-        # Standard formula: CSP = sqrt( delta_H^2 + (delta_N / 5.88)^2 )
+        # New formula: CSP = sqrt( 0.5 * ( delta_H^2 + (0.2 * delta_N)^2 ) )
         delta_h = features[:, h_idx]
         delta_n = features[:, n_idx]
-        csp_values = np.sqrt(delta_h**2 + (delta_n / 5.88)**2)
+        csp_values = np.sqrt(0.5 * (delta_h**2 + (0.2 * delta_n)**2))
     # Standardize features (Z-score normalization)
     # Manual standardization to avoid dependency if needed, but sklearn is in requirements
     mean = np.mean(features, axis=0)
     std = np.std(features, axis=0)
+    feature_means = {name: float(m) for name, m in zip(feature_names, mean)}
+    feature_stds = {name: float(s) for name, s in zip(feature_names, std)}
+    
     # Avoid division by zero
     std[std == 0] = 1.0
     features_scaled = (features - mean) / std
@@ -64,12 +67,20 @@ def run_residue_pca(residue_data, feature_names=None, calculate_csp=False, h_idx
         "results": results,
         "variance_ratio": variance_ratio,
         "residue_nos": residue_nos.tolist(),
-        "feature_names": feature_names
+        "feature_names": feature_names,
+        "feature_means": feature_means,
+        "feature_stds": feature_stds
     }
     
     if csp_values is not None:
         ret["csp"] = csp_values.tolist()
         ret["csp_h_col"] = feature_names[h_idx]
         ret["csp_n_col"] = feature_names[n_idx]
+        
+    if calculate_csp and n_features >= 2 and h_idx is not None and n_idx is not None:
+        # Original std array before removing zeros
+        orig_std_n = np.std(features, axis=0)[n_idx]
+        if orig_std_n != 0:
+            ret["alpha_pali"] = float(np.std(features, axis=0)[h_idx] / orig_std_n)
         
     return ret
