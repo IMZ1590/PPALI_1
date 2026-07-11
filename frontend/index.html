@@ -142,7 +142,7 @@
                 <div class="text-sm text-sky-500 font-bold bg-sky-50 px-2 py-1 rounded inline-block mb-1">Demo
                     Ver.
                 </div>
-                <div class="text-[10px] text-slate-400">Last Release: 2026.04.02</div>
+                <div class="text-[10px] text-slate-400">Last Release: 2026.04.06</div>
             </div>
 
             <h1 class="text-4xl md:text-5xl font-bold mb-2 md:mb-4">
@@ -414,12 +414,12 @@
                             <div class="text-xs text-slate-500 bg-slate-100 p-3 rounded-lg">
                                 <p class="font-semibold mb-1">Color Legend:</p>
                                 <div class="flex items-center mb-1"><span
-                                        class="w-3 h-3 bg-rose-400 rounded-full mr-2"></span> PC1 Outliers (Red)</div>
+                                        class="w-3 h-3 rounded-full mr-2" style="background-color: #D55E00;"></span> PC1 Outliers (Vermilion)</div>
                                 <div class="flex items-center mb-1"><span
-                                        class="w-3 h-3 bg-sky-400 rounded-full mr-2"></span> PC2 Outliers (Sky Blue)
+                                        class="w-3 h-3 rounded-full mr-2" style="background-color: #56B4E9;"></span> PC2 Outliers (Sky Blue)
                                 </div>
                                 <div class="flex items-center mb-1"><span
-                                        class="w-3 h-3 bg-purple-500 rounded-full mr-2"></span> PC3 Outliers (Purple)
+                                        class="w-3 h-3 rounded-full mr-2" style="background-color: #009E73;"></span> PC3 Outliers (Bluish Green)
                                 </div>
                                 <div class="flex items-center"><span
                                         class="w-3 h-3 bg-slate-300 rounded-full mr-2"></span>
@@ -474,6 +474,9 @@
             </div>
         </div>
     </div>
+    
+    <div class="mt-8 text-center text-xs text-slate-500 mb-8 max-w-6xl mx-auto">
+        입력하신 데이터는 수집되어 연구 및 서비스 개선 목적으로 데이터 서버에 저장・사용될 수 있습니다. (Data may be collected and used for research and service improvement purposes.)
     </div>
 
     <script>
@@ -644,17 +647,17 @@
                 const s2 = data.results[1]?.scores[idx] || 0;
                 const s3 = data.results[2]?.scores[idx] || 0;
 
-                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
-                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
-                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
+                const p1 = data.results[0]?.p_values?.[idx];
+                const p2 = data.results[1]?.p_values?.[idx];
+                const p3 = data.results[2]?.p_values?.[idx];
 
                 const pValueThreshold = parseFloat(document.getElementById('pvalue-threshold') ? document.getElementById('pvalue-threshold').value : "0.05");
 
                 let sourcePC = "-";
                 let minPval = "-";
-                if (p1 < pValueThreshold) { sourcePC = "PC1"; minPval = p1; }
-                else if (p2 < pValueThreshold) { sourcePC = "PC2"; minPval = p2; }
-                else if (p3 < pValueThreshold) { sourcePC = "PC3"; minPval = p3; }
+                if (p1 !== null && p1 !== undefined && p1 < pValueThreshold) { sourcePC = "PC1"; minPval = p1; }
+                else if (p2 !== null && p2 !== undefined && p2 < pValueThreshold) { sourcePC = "PC2"; minPval = p2; }
+                else if (p3 !== null && p3 !== undefined && p3 < pValueThreshold) { sourcePC = "PC3"; minPval = p3; }
 
                 const isOutlier = sourcePC !== "-" ? "Yes" : "No";
 
@@ -793,30 +796,34 @@
                 const s2 = data.results[1]?.scores[idx] || 0;
                 const s3 = data.results[2]?.scores[idx] || 0;
 
-                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
-                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
-                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
+                const p1 = data.results[0]?.p_values?.[idx];
+                const p2 = data.results[1]?.p_values?.[idx];
+                const p3 = data.results[2]?.p_values?.[idx];
 
                 let isOutlier = false;
                 let sourcePC = "-";
                 let minPval = "-";
-                let badgeClass = "";
+                let badgeStyle = "";
+                let textStyle = "";
                 let textColor = "text-slate-500";
 
-                if (p1 < P_VALUE_THRESHOLD) {
+                if (p1 !== null && p1 !== undefined && p1 < P_VALUE_THRESHOLD) {
                     isOutlier = true; sourcePC = "PC1"; minPval = p1;
-                    badgeClass = "bg-rose-100 text-rose-700";
-                    textColor = "text-rose-600 font-bold";
+                    badgeStyle = "background-color: rgba(213,94,0,0.1); color: #D55E00;";
+                    textColor = "font-bold";
+                    textStyle = "color: #D55E00;";
                     pc1Outliers.push(parseInt(resNo));
-                } else if (p2 < P_VALUE_THRESHOLD) {
+                } else if (p2 !== null && p2 !== undefined && p2 < P_VALUE_THRESHOLD) {
                     isOutlier = true; sourcePC = "PC2"; minPval = p2;
-                    badgeClass = "bg-sky-100 text-sky-700";
-                    textColor = "text-sky-600 font-bold";
+                    badgeStyle = "background-color: rgba(86,180,233,0.1); color: #56B4E9;";
+                    textColor = "font-bold";
+                    textStyle = "color: #56B4E9;";
                     pc2Outliers.push(parseInt(resNo));
-                } else if (p3 < P_VALUE_THRESHOLD) {
+                } else if (p3 !== null && p3 !== undefined && p3 < P_VALUE_THRESHOLD) {
                     isOutlier = true; sourcePC = "PC3"; minPval = p3;
-                    badgeClass = "bg-purple-100 text-purple-700";
-                    textColor = "text-purple-600 font-bold";
+                    badgeStyle = "background-color: rgba(0,158,115,0.1); color: #009E73;";
+                    textColor = "font-bold";
+                    textStyle = "color: #009E73;";
                     pc3Outliers.push(parseInt(resNo));
                 }
 
@@ -825,13 +832,13 @@
                     tr.className = 'border-b border-slate-200/50 hover:bg-slate-50/30 transition-colors';
 
                     tr.innerHTML = `
-                        <td class="px-4 py-3 font-semibold text-sky-600">Res ${resNo}</td>
-                        <td class="px-4 py-3 text-center ${p1 < P_VALUE_THRESHOLD ? 'text-rose-600 font-bold' : ''}">${s1.toFixed(2)}</td>
-                        <td class="px-4 py-3 text-center ${p2 < P_VALUE_THRESHOLD ? 'text-sky-600 font-bold' : ''}">${s2.toFixed(2)}</td>
-                        <td class="px-4 py-3 text-center ${p3 < P_VALUE_THRESHOLD ? 'text-purple-600 font-bold' : ''}">${s3.toFixed(2)}</td>
+                        <td class="px-4 py-3 font-semibold text-slate-700">Res ${resNo}</td>
+                        <td class="px-4 py-3 text-center ${p1 < P_VALUE_THRESHOLD ? 'font-bold' : ''}" ${p1 < P_VALUE_THRESHOLD ? 'style="color:#D55E00;"' : ''}>${s1.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center ${p2 < P_VALUE_THRESHOLD ? 'font-bold' : ''}" ${p2 < P_VALUE_THRESHOLD ? 'style="color:#56B4E9;"' : ''}>${s2.toFixed(2)}</td>
+                        <td class="px-4 py-3 text-center ${p3 < P_VALUE_THRESHOLD ? 'font-bold' : ''}" ${p3 < P_VALUE_THRESHOLD ? 'style="color:#009E73;"' : ''}>${s3.toFixed(2)}</td>
 
-                        <td class="px-4 py-3 text-center font-mono text-xs"><span class="px-2 py-0.5 rounded ${badgeClass} font-semibold">${sourcePC}</span></td>
-                        <td class="px-4 py-3 text-center font-mono text-xs ${textColor}">${minPval.toExponential(2)}</td>
+                        <td class="px-4 py-3 text-center font-mono text-xs"><span class="px-2 py-0.5 rounded font-semibold" style="${badgeStyle}">${sourcePC}</span></td>
+                        <td class="px-4 py-3 text-center font-mono text-xs ${textColor}" style="${textStyle}">${minPval.toExponential(2)}</td>
                     `;
                     body.appendChild(tr);
                 }
@@ -875,7 +882,7 @@
                     y: combined.map(c => c.val),
                     type: 'bar',
                     marker: {
-                        color: combined.map(c => c.val >= 0 ? '#fb7185' : '#38bdf8')
+                        color: combined.map(c => c.val >= 0 ? '#D55E00' : '#56B4E9')
                     }
                 };
 
@@ -899,7 +906,7 @@
             const values = data.variance_ratio.map(v => v * 100);
 
             // PC 개수에 상관없이 사용할 수 있는 색상 팔레트 (부족하면 반복)
-            const baseColors = ['#38bdf8', '#818cf8', '#a855f7', '#ec4899', '#f59e0b', '#10b981'];
+            const baseColors = ['#D55E00', '#56B4E9', '#009E73', '#CC79A7', '#E69F00', '#0072B2'];
             const colors = values.map((_, i) => baseColors[i % baseColors.length]);
 
             const traces = [{
@@ -957,24 +964,26 @@
             const is3D = data.results.length >= 3;
 
             const textLabels = data.residue_nos.map((r, idx) => {
-                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
-                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
-                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
+                const p1 = data.results[0]?.p_values?.[idx];
+                const p2 = data.results[1]?.p_values?.[idx];
+                const p3 = data.results[2]?.p_values?.[idx];
 
-                if (p1 < P_VALUE_THRESHOLD || p2 < P_VALUE_THRESHOLD || p3 < P_VALUE_THRESHOLD) {
+                if ((p1 !== null && p1 !== undefined && p1 < P_VALUE_THRESHOLD) || 
+                    (p2 !== null && p2 !== undefined && p2 < P_VALUE_THRESHOLD) || 
+                    (p3 !== null && p3 !== undefined && p3 < P_VALUE_THRESHOLD)) {
                     return `Res ${r}`;
                 }
                 return '';
             });
 
             const markerColors = data.residue_nos.map((r, idx) => {
-                const p1 = data.results[0]?.p_values?.[idx] ?? 1;
-                const p2 = data.results[1]?.p_values?.[idx] ?? 1;
-                const p3 = data.results[2]?.p_values?.[idx] ?? 1;
+                const p1 = data.results[0]?.p_values?.[idx];
+                const p2 = data.results[1]?.p_values?.[idx];
+                const p3 = data.results[2]?.p_values?.[idx];
 
-                if (p1 < P_VALUE_THRESHOLD) return '#fb7185';
-                if (p2 < P_VALUE_THRESHOLD) return '#38bdf8';
-                if (p3 < P_VALUE_THRESHOLD) return '#a855f7';
+                if (p1 !== null && p1 !== undefined && p1 < P_VALUE_THRESHOLD) return '#D55E00';
+                if (p2 !== null && p2 !== undefined && p2 < P_VALUE_THRESHOLD) return '#56B4E9';
+                if (p3 !== null && p3 !== undefined && p3 < P_VALUE_THRESHOLD) return '#009E73';
                 return '#e2e8f0'; // Gray
             });
 
@@ -1053,8 +1062,8 @@
                 const sd = Math.sqrt(data.csp.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / data.csp.length);
 
                 const cspColors = data.csp.map(v => {
-                    if (v >= mean + 2 * sd) return '#a855f7'; // Purple for >= 2 sigma
-                    if (v >= mean + 1 * sd) return '#38bdf8'; // Blue for >= 1 sigma
+                    if (v >= mean + 2 * sd) return '#CC79A7'; // Reddish Purple for >= 2 sigma
+                    if (v >= mean + 1 * sd) return '#E69F00'; // Orange for >= 1 sigma
                     return '#e2e8f0'; // Gray for normal
                 });
 
@@ -1067,7 +1076,7 @@
                 };
 
                 const layout = {
-                    title: { text: "Chemical Shift Perturbation (CSP)", font: { color: '#38bdf8', size: 14 } },
+                    title: { text: "Chemical Shift Perturbation (CSP)", font: { color: '#CC79A7', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
@@ -1078,11 +1087,11 @@
                     shapes: [
                         {
                             type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + sd, y1: mean + sd, yref: 'y',
-                            line: { color: '#38bdf8', width: 1, dash: 'dash' }
+                            line: { color: '#E69F00', width: 1, dash: 'dash' }
                         },
                         {
                             type: 'line', x0: 0, x1: 1, xref: 'paper', y0: mean + 2 * sd, y1: mean + 2 * sd, yref: 'y',
-                            line: { color: '#a855f7', width: 1, dash: 'dash' }
+                            line: { color: '#CC79A7', width: 1, dash: 'dash' }
                         }
                     ]
                 };
@@ -1096,23 +1105,23 @@
                 pc1Div.className = 'w-full';
                 container.appendChild(pc1Div);
 
-                const scores1 = data.results[0].scores.map(Math.abs);
-                const mean1 = scores1.reduce((a, b) => a + b, 0) / scores1.length;
-                const sd1 = Math.sqrt(scores1.reduce((a, b) => a + Math.pow(b - mean1, 2), 0) / scores1.length);
+                const validScores1 = data.results[0].scores.filter(v => v !== null).map(Math.abs);
+                const mean1 = validScores1.reduce((a, b) => a + b, 0) / validScores1.length;
+                const sd1 = Math.sqrt(validScores1.reduce((a, b) => a + Math.pow(b - mean1, 2), 0) / validScores1.length);
                 const threshold1 = mean1 + sigmaMultiplier * sd1;
 
-                const colors1 = scores1.map(v => v >= threshold1 ? '#fb7185' : '#e2e8f0');
+                const colors1 = data.results[0].scores.map(v => (v !== null && Math.abs(v) >= threshold1) ? '#D55E00' : '#e2e8f0');
 
                 const trace = {
                     x: residues,
-                    y: scores1,
+                    y: data.results[0].scores.map(v => v !== null ? Math.abs(v) : null),
                     type: 'bar',
                     name: '|PC1|',
                     marker: { color: colors1 }
                 };
 
                 const layout = {
-                    title: { text: "Absolute PC1 Scores (|PC1|)", font: { color: '#fb7185', size: 14 } },
+                    title: { text: "Absolute PC1 Scores (|PC1|)", font: { color: '#D55E00', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
@@ -1123,7 +1132,7 @@
                     shapes: [
                         {
                             type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold1, y1: threshold1, yref: 'y',
-                            line: { color: '#fb7185', width: 1, dash: 'dash' }
+                            line: { color: '#D55E00', width: 1, dash: 'dash' }
                         }
                     ]
                 };
@@ -1136,23 +1145,23 @@
                 pc2Div.className = 'w-full';
                 container.appendChild(pc2Div);
 
-                const scores2 = data.results[1].scores.map(Math.abs);
-                const mean2 = scores2.reduce((a, b) => a + b, 0) / scores2.length;
-                const sd2 = Math.sqrt(scores2.reduce((a, b) => a + Math.pow(b - mean2, 2), 0) / scores2.length);
+                const validScores2 = data.results[1].scores.filter(v => v !== null).map(Math.abs);
+                const mean2 = validScores2.reduce((a, b) => a + b, 0) / validScores2.length;
+                const sd2 = Math.sqrt(validScores2.reduce((a, b) => a + Math.pow(b - mean2, 2), 0) / validScores2.length);
                 const threshold2 = mean2 + sigmaMultiplier * sd2;
 
-                const colors2 = scores2.map(v => v >= threshold2 ? '#38bdf8' : '#e2e8f0');
+                const colors2 = data.results[1].scores.map(v => (v !== null && Math.abs(v) >= threshold2) ? '#56B4E9' : '#e2e8f0');
 
                 const trace = {
                     x: residues,
-                    y: scores2,
+                    y: data.results[1].scores.map(v => v !== null ? Math.abs(v) : null),
                     type: 'bar',
                     name: '|PC2|',
                     marker: { color: colors2 }
                 };
 
                 const layout = {
-                    title: { text: "Absolute PC2 Scores (|PC2|)", font: { color: '#38bdf8', size: 14 } },
+                    title: { text: "Absolute PC2 Scores (|PC2|)", font: { color: '#56B4E9', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
@@ -1163,7 +1172,7 @@
                     shapes: [
                         {
                             type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold2, y1: threshold2, yref: 'y',
-                            line: { color: '#38bdf8', width: 1, dash: 'dash' }
+                            line: { color: '#56B4E9', width: 1, dash: 'dash' }
                         }
                     ]
                 };
@@ -1176,23 +1185,23 @@
                 pc3Div.className = 'w-full';
                 container.appendChild(pc3Div);
 
-                const scores3 = data.results[2].scores.map(Math.abs);
-                const mean3 = scores3.reduce((a, b) => a + b, 0) / scores3.length;
-                const sd3 = Math.sqrt(scores3.reduce((a, b) => a + Math.pow(b - mean3, 2), 0) / scores3.length);
+                const validScores3 = data.results[2].scores.filter(v => v !== null).map(Math.abs);
+                const mean3 = validScores3.reduce((a, b) => a + b, 0) / validScores3.length;
+                const sd3 = Math.sqrt(validScores3.reduce((a, b) => a + Math.pow(b - mean3, 2), 0) / validScores3.length);
                 const threshold3 = mean3 + sigmaMultiplier * sd3;
 
-                const colors3 = scores3.map(v => v >= threshold3 ? '#a855f7' : '#e2e8f0');
+                const colors3 = data.results[2].scores.map(v => (v !== null && Math.abs(v) >= threshold3) ? '#009E73' : '#e2e8f0');
 
                 const trace = {
                     x: residues,
-                    y: scores3,
+                    y: data.results[2].scores.map(v => v !== null ? Math.abs(v) : null),
                     type: 'bar',
                     name: '|PC3|',
                     marker: { color: colors3 }
                 };
 
                 const layout = {
-                    title: { text: "Absolute PC3 Scores (|PC3|)", font: { color: '#a855f7', size: 14 } },
+                    title: { text: "Absolute PC3 Scores (|PC3|)", font: { color: '#009E73', size: 14 } },
                     paper_bgcolor: 'rgba(0,0,0,0)',
                     plot_bgcolor: 'rgba(0,0,0,0)',
                     font: { color: '#94a3b8', size: 10 },
@@ -1203,7 +1212,7 @@
                     shapes: [
                         {
                             type: 'line', x0: 0, x1: 1, xref: 'paper', y0: threshold3, y1: threshold3, yref: 'y',
-                            line: { color: '#a855f7', width: 1, dash: 'dash' }
+                            line: { color: '#009E73', width: 1, dash: 'dash' }
                         }
                     ]
                 };
@@ -1516,17 +1525,17 @@
             // Priority: PC1 > PC2 > PC3
             if (pc1Outliers.length > 0) {
                 const sel = chain ? `${chainSele} and (${pc1Outliers.join(", ")})` : pc1Outliers.join(", ");
-                schemeRules.push(["#fb7185", sel]); // Red
+                schemeRules.push(["#D55E00", sel]); // Vermilion
                 combinedOutliers.push(...pc1Outliers);
             }
             if (pc2Outliers.length > 0) {
                 const sel = chain ? `${chainSele} and (${pc2Outliers.join(", ")})` : pc2Outliers.join(", ");
-                schemeRules.push(["#38bdf8", sel]); // Sky Blue
+                schemeRules.push(["#56B4E9", sel]); // Sky Blue
                 combinedOutliers.push(...pc2Outliers);
             }
             if (pc3Outliers.length > 0) {
                 const sel = chain ? `${chainSele} and (${pc3Outliers.join(", ")})` : pc3Outliers.join(", ");
-                schemeRules.push(["#a855f7", sel]); // Purple
+                schemeRules.push(["#009E73", sel]); // Bluish Green
                 combinedOutliers.push(...pc3Outliers);
             }
 
